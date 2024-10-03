@@ -1,5 +1,9 @@
 {
+  "name": "blockchain-as-a-service",
+  "description": "Solana-based blockchain as a service platform",
+  "version": "0.1.0",
   "private": true,
+  "author": "BARK Protocol",
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
@@ -11,6 +15,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@coral-xyz": "link:@coral-xyz",
     "@hookform/resolvers": "^3.9.0",
     "@jup-ag/core": "4.0.0-beta.21",
     "@radix-ui/react-accordion": "^1.2.1",
@@ -59,11 +64,14 @@
     "drizzle-orm": "^0.33.0",
     "embla-carousel-react": "^8.3.0",
     "jose": "^5.9.3",
+    "lodash": "^4.17.21",
+    "logger": "^0.0.1",
     "lucide-react": "^0.441.0",
     "next": "15.0.0-canary.152",
     "next-themes": "^0.3.0",
     "postcss": "^8.4.47",
     "postgres": "^3.4.4",
+    "prettier": "^3.3.3",
     "qrcode": "^1.5.4",
     "react": "19.0.0-rc-7771d3a7-20240827",
     "react-dom": "19.0.0-rc-7771d3a7-20240827",
@@ -79,5 +87,9 @@
     "typescript": "^5.6.2",
     "vaul": "^1.0.0",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
+    "raw-loader": "^4.0.2"
   }
 }

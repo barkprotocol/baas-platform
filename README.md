@@ -1,55 +1,53 @@
-# Next.js SaaS Starter
+Here's an updated version of your **README.md** for the **BARK BaaS Platform**, incorporating the information you've outlined:
 
-This is a starter template for building a SaaS application using **Next.js** with support for authentication, Stripe integration for payments, and a dashboard for logged-in users.
+```md
+# BARK BaaS Platform
 
-**Demo: [https://next-saas-start.vercel.app/](https://next-saas-start.vercel.app/)**
+Solana-based blockchain as a service platform built by BARK Protocol.
 
-<details>
-  <summary>Why did I make this?</summary>
-  
-  In 2020, I made a course called "React 2025" which showed how to build a SaaS application with Next.js, Stripe, and other tools.
+## Overview
 
-Well, it's almost 2025 and React 19 has brought so many amazing new features I didn't predict! This repo is a demonstration of the latest React and Next.js patterns. These patterns can drastically simplify some common tasks in building your SaaS, like building forms, talking to your database, and more.
-
-For example, React now has built in hooks like `useActionState` to handle inline form errors and pending states. React Server Actions can replace a lot of boilerplate code needed to call an API Route from the client-side. And finally, the React `use` hook combined with Next.js makes it incredibly easy to build a powerful `useUser()` hook.
-
-We're able to fetch the user from our Postgres database in the root layout, but _not_ await the `Promise`. Instead, we forward the `Promise` to a React context provider, where we can "unwrap" it and awaited the streamed in data. This means we can have the best of both worlds: easy code to fetch data from our database (e.g. `getUser()`) and a React hook we can use in Client Components (e.g. `useUser()`).
-
-Fun fact: the majority of the UI for this application was built with [v0](https://v0.dev) 🤯 [More details here](https://x.com/leeerob/status/1835777934361084316) if you want to learn about this repo.
-
-</details>
-
-## Features
-
-- Marketing landing page (`/`) with animated Terminal element
-- Pricing page (`/pricing`) which connects to Stripe Checkout
-- Dashboard pages with CRUD operations on users/teams
-- Basic RBAC with Owner and Member roles
-- Subscription management with Stripe Customer Portal
-- Email/password authentication with JWTs stored to cookies
-- Global middleware to protect logged-in routes
-- Local middleware to protect Server Actions or validate Zod schemas
-- Activity logging system for any user events
+The BARK BaaS Platform is a scalable, Solana-powered solution for building decentralized applications, with features like wallet integration, token management, staking mechanisms, and NFT minting. It comes with a robust API and a user-friendly interface to streamline blockchain interactions.
 
 ## Tech Stack
 
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Database**: [Postgres](https://www.postgresql.org/)
-- **ORM**: [Drizzle](https://orm.drizzle.team/)
-- **Payments**: [Stripe](https://stripe.com/)
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/)
+- **Next.js**: React framework for server-side rendering and static site generation.
+- **TypeScript**: A statically typed superset of JavaScript.
+- **Solana Web3**: Integration with Solana blockchain.
+- **Tailwind CSS**: A utility-first CSS framework.
+- **Drizzle ORM**: Type-safe database interaction with PostgreSQL.
+- **PostgreSQL**: Open-source relational database.
+- **Stripe**: Payment gateway for subscriptions and payments.
+- **PNPM**: Fast, disk space-efficient package manager.
 
 ## Getting Started
 
+### 1. Clone the repository
+
 ```bash
-git clone https://github.com/leerob/next-saas-starter
-cd next-saas-starter
+git clone https://github.com/your-username/bark-baas-platform.git
+```
+
+### 2. Navigate to the project directory:
+
+```bash
+cd bark-baas-platform
+```
+
+### 3. Install dependencies:
+
+```bash
 pnpm install
 ```
 
+### 4. Set up environment variables:
+
+- Copy the `.env.example` file to `.env`.
+- Fill in the required values in the `.env` file.
+
 ## Running Locally
 
-Use the included setup script to create your `.env` file:
+Use the included setup script to create your `.env` file and set up the database:
 
 ```bash
 pnpm db:setup
@@ -62,65 +60,66 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-This will create the following user and team:
+This will create the following credentials:
 
-- User: `test@test.com`
-- Password: `admin123`
+- **User**: `test@test.com`
+- **Password**: `admin123`
 
-You can, of course, create new users as well through `/sign-up`.
+You can create new users via the `/sign-up` route.
 
-Finally, run the Next.js development server:
+### 5. Start the development server:
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+Open [http://localhost:3000](http://localhost:3000) to see the app in action.
 
-Optionally, you can listen for Stripe webhooks locally through their CLI to handle subscription change events:
+## Testing Payments
+
+To test Stripe payments, use the following card details:
+
+- **Card Number**: `4242 4242 4242 4242`
+- **Expiration**: Any future date.
+- **CVC**: Any 3-digit number.
+
+You can listen for Stripe webhooks locally via their CLI:
 
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-## Testing Payments
-
-To test Stripe payments, use the following test card details:
-
-- Card Number: `4242 4242 4242 4242`
-- Expiration: Any future date
-- CVC: Any 3-digit number
-
 ## Going to Production
 
-When you're ready to deploy your SaaS application to production, follow these steps:
+### 1. Set up a production Stripe webhook
 
-### Set up a production Stripe webhook
-
-1. Go to the Stripe Dashboard and create a new webhook for your production environment.
+1. Go to the Stripe Dashboard and create a new webhook.
 2. Set the endpoint URL to your production API route (e.g., `https://yourdomain.com/api/stripe/webhook`).
-3. Select the events you want to listen for (e.g., `checkout.session.completed`, `customer.subscription.updated`).
+3. Select events like `checkout.session.completed` and `customer.subscription.updated`.
 
-### Deploy to Vercel
+### 2. Deploy to Vercel
 
-1. Push your code to a GitHub repository.
+1. Push your code to GitHub.
 2. Connect your repository to Vercel and deploy it.
-3. Follow the Vercel deployment process, which will guide you through setting up your project.
+3. Add environment variables in Vercel's project settings:
+    - `BASE_URL`: Your production domain.
+    - `STRIPE_SECRET_KEY`: Your production Stripe secret key.
+    - `STRIPE_WEBHOOK_SECRET`: The webhook secret for Stripe.
+    - `POSTGRES_URL`: Production PostgreSQL database URL.
+    - `AUTH_SECRET`: Generate using `openssl rand -base64 32`.
 
-### Add environment variables
+## Usage
 
-In your Vercel project settings (or during deployment), add all the necessary environment variables. Make sure to update the values for the production environment, including:
+For detailed usage instructions and API documentation, visit the [official documentation](https://docs.barkprotocol.com).
 
-1. `BASE_URL`: Set this to your production domain.
-2. `STRIPE_SECRET_KEY`: Use your Stripe secret key for the production environment.
-3. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
-4. `POSTGRES_URL`: Set this to your production database URL.
-5. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
+## Contributing
 
-## Other Templates
+We welcome contributions to the BARK BaaS Platform! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-While this template is intentionally minimal and to be used as a learning resource, there are other paid versions in the community which are more full-featured:
+## License
 
-- https://achromatic.dev
-- https://shipfa.st
-- https://makerkit.dev
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Contact
+
+For support, reach out to us at [support@barkprotocol.com](mailto:support@barkprotocol.com) or join our [X community](https://x.com/bark_protocol).
