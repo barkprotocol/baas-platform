@@ -1,12 +1,12 @@
 {
-  "version": "7",
+  "version": "1",
   "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "7",
+      "version": "1",
       "when": 1726443359662,
-      "tag": "0000_soft_the_anarchist",
+      "tag": "01_blink_as_a_service",
       "breakpoints": true
     }
   ]

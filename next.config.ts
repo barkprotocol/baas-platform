@@ -1,9 +1,15 @@
-import type { NextConfig } from 'next';
+import { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  experimental: {
-    ppr: true,
+  images: {
+    domains: [
+      'images.ctfassets.net',
+      'ucarecdn.com',
+      'vercel.com',
+      'github.com',
+      'raw.githubusercontent.com',
+    ],
   },
-};
+}
 
 export default nextConfig;

@@ -1,34 +1,59 @@
-import './globals.css';
+import './styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
 import { UserProvider } from '@/lib/auth';
 import { getUser } from '@/lib/db/queries';
+import { Toaster } from '@/components/ui/toaster';
+import { WalletProviders } from '@/components/providers/wallet-providers'
+import { ThemeProvider } from "@/components/ui/theme-provider"
 
 export const metadata: Metadata = {
-  title: 'Next.js SaaS Starter',
-  description: 'Get started quickly with Next.js, Postgres, and Stripe.',
+  title: 'BARK - Blockchain As A Service',
+  description: 'Get started with Solana Actions and Blinks',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
 };
 
-const manrope = Manrope({ subsets: ['latin'] });
+const manrope = Manrope({ 
+  subsets: ['latin'],
+  display: 'swap',
+});
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  let userPromise = getUser();
+  const userPromise = getUser();
 
   return (
-    <html
-      lang="en"
-      className={`bg-white dark:bg-gray-950 text-black dark:text-white ${manrope.className}`}
-    >
-      <body className="min-h-[100dvh] bg-gray-50">
-        <UserProvider userPromise={userPromise}>{children}</UserProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`bg-background text-foreground ${manrope.className}`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <WalletProviders>
+            <UserProvider userPromise={userPromise}>
+              <div className="flex flex-col min-h-screen">
+                <main className="flex-grow">
+                  {children}
+                </main>
+              </div>
+              <Toaster />
+            </UserProvider>
+          </WalletProviders>
+        </ThemeProvider>
       </body>
     </html>
   );
