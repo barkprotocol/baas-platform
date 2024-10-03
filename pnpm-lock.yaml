@@ -17,6 +17,9 @@ importers:
       '@jup-ag/core':
         specifier: 4.0.0-beta.21
         version: 4.0.0-beta.21(@project-serum/anchor@0.24.2(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@saberhq/solana-contrib@1.15.0(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bn.js@5.2.1))(@solana/buffer-layout@4.0.1)(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(buffer@6.0.3)(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
+      '@noble/ed25519':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@radix-ui/react-accordion':
         specifier: ^1.2.1
         version: 1.2.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
@@ -1784,6 +1787,9 @@ packages:
 
   '@noble/ed25519@1.7.3':
     resolution: {integrity: sha512-iR8GBkDt0Q3GyaVcIu7mSsVIqnFbkbRzGLWlvhwunacoLwt4J3swfKhfaM6rN6WY+TBGoYT1GtT1mIh2/jGbRQ==}
+
+  '@noble/ed25519@2.1.0':
+    resolution: {integrity: sha512-KM4qTyXPinyCgMzeYJH/UudpdL+paJXtY3CHtHYZQtBkS8MZoPr4rOikZllIutJe0d06QDQKisyn02gxZ8TcQA==}
 
   '@noble/hashes@1.1.2':
     resolution: {integrity: sha512-KYRCASVTv6aeUi1tsF8/vpyR7zpfs3FUzy2Jqm+MU+LmUKhQ0y2FpfwqkCcxSg2ua4GALJd8k2R76WxwZGbQpA==}
@@ -10042,6 +10048,8 @@ snapshots:
       '@noble/hashes': 1.5.0
 
   '@noble/ed25519@1.7.3': {}
+
+  '@noble/ed25519@2.1.0': {}
 
   '@noble/hashes@1.1.2': {}
 
