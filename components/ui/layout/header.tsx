@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
+import { signUp } from '@/app/(login)/actions'
 
 const logoUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
 
@@ -28,6 +30,7 @@ export function Header() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const router = useRouter()
+  const { toast } = useToast()
 
   useEffect(() => {
     setMounted(true)
@@ -39,11 +42,28 @@ export function Header() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically call your API to sign up the user
-    console.log('Signing up with:', email, password)
-    // For demonstration, we'll just close the dialog and redirect
-    setIsSignUpOpen(false)
-    router.push('/dashboard')
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+
+    try {
+      const result = await signUp({}, formData)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+      setIsSignUpOpen(false)
+      toast({
+        title: "Sign up successful",
+        description: "Welcome to BARK Protocol! Please check your email to verify your account.",
+      })
+      router.push('/dashboard')
+    } catch (error) {
+      toast({
+        title: "Sign up failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
   }
 
   return (

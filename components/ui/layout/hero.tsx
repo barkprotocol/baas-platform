@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,17 +11,17 @@ export function Hero() {
   const [scrollPosition, setScrollPosition] = useState(0)
   const router = useRouter()
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollPosition(window.scrollY)
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+  const handleScroll = useCallback(() => {
+    setScrollPosition(window.scrollY)
   }, [])
 
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [handleScroll])
+
   const handleGetStarted = () => {
-    router.push('/signup')
+    router.push('/pages/get-started')
   }
 
   const handleLearnMore = () => {
@@ -77,7 +77,13 @@ export function Hero() {
           </div>
         </div>
       </div>
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce z-20">
+      <div 
+        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce z-20"
+        style={{
+          opacity: Math.max(0, 1 - scrollPosition / 300),
+          transform: `translate(-50%, ${Math.min(scrollPosition / 2, 100)}px)`,
+        }}
+      >
         <ChevronDown className="h-8 w-8 text-muted-foreground" />
       </div>
     </section>
