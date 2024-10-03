@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/app/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { AuthError } from '@supabase/supabase-js'
 import { z } from 'zod'
