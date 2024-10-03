@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { AuthError } from '@supabase/supabase-js'
 import { z } from 'zod'
 import * as ed from '@noble/ed25519'
-import { decode as base58Decode } from 'bs58'
+import bs58 from 'bs58'
 
 const userSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -127,8 +127,8 @@ export async function signInWithSolana(publicKey: string, signedMessage: string,
 
 async function verifySignature(publicKey: string, signedMessage: string, message: string): Promise<boolean> {
   try {
-    const publicKeyBytes = base58Decode(publicKey)
-    const signatureBytes = base58Decode(signedMessage)
+    const publicKeyBytes = bs58.decode(publicKey)
+    const signatureBytes = bs58.decode(signedMessage)
     const messageBytes = new TextEncoder().encode(message)
 
     const isValid = await ed.verify(signatureBytes, messageBytes, publicKeyBytes)
