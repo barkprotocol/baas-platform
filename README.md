@@ -1,8 +1,8 @@
 # BARK BaaS Platform
 
-![BARK BaaS Platform Landing Page](.github/images/landing-page.png)
+**Solana-based blockchain as a service platform built by BARK Protocol**
 
-Solana-based blockchain as a service platform built by BARK Protocol.
+![BARK BaaS Platform Landing Page](.github/images/landing-page.png)
 
 ## Overview
 
