@@ -88,6 +88,14 @@ The BARK Protocol is built on a modern technology stack designed for scalability
    npm run dev
    ```
 
+## Example Blinks pages
+
+```blinks/
+
+- `index.tsx` handles creating new Blinks
+- `blinkboard.tsx` provides an overview of Blinks, donations, and payments
+- `page.tsx` serves as a landing page for the Blinks section
+
 ### API Documentation
 
 - **BARK Protocol API**: Detailed documentation for all available API endpoints, request/response formats, and examples.

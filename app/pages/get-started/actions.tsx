@@ -13,7 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Loader2 } from 'lucide-react'
 
 interface ApiResponse {
   success: boolean;
@@ -93,7 +92,7 @@ export default function GetStartedPage() {
   }
 
   const handleBackToMain = () => {
-    router.push('/')
+    router.push('/') // Changed to navigate to the landing page
   }
 
   const handleImageDownload = (inputRef: React.RefObject<HTMLInputElement>, imageName: string) => {
@@ -128,14 +127,14 @@ export default function GetStartedPage() {
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-0">Get Started with BARK Protocol</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold">Get Started with BARK Protocol</h1>
         <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: '#D0BFB4'}} /> Back to Main
+          <ArrowLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} /> Back to Main
         </Button>
       </div>
       <Alert className="mb-6">
-        <AlertCircle className="h-4 w-4" aria-hidden="true" style={{color: '#D0BFB4'}} />
+        <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} />
         <AlertTitle>Welcome to your Blinkboard!</AlertTitle>
         <AlertDescription>
           Here you can create Solana Blinks, process donations, make payments, mint NFTs, start crowdfunding campaigns, send gifts, and set up your merchant account.
@@ -144,19 +143,19 @@ export default function GetStartedPage() {
       
       <Tabs defaultValue="blink" className="space-y-6" onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-          <TabsTrigger value="blink" className="flex items-center justify-center"><Zap className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Blink</TabsTrigger>
-          <TabsTrigger value="donations" className="flex items-center justify-center"><Coins className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Donations</TabsTrigger>
-          <TabsTrigger value="payments" className="flex items-center justify-center"><CreditCard className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Payments</TabsTrigger>
-          <TabsTrigger value="nft" className="flex items-center justify-center"><PlusCircle className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Mint NFT</TabsTrigger>
-          <TabsTrigger value="crowdfunding" className="flex items-center justify-center"><Landmark className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Crowdfunding</TabsTrigger>
-          <TabsTrigger value="gift" className="flex items-center justify-center"><Gift className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Gift</TabsTrigger>
-          <TabsTrigger value="merchant" className="flex items-center justify-center"><Store className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Merchant</TabsTrigger>
+          <TabsTrigger value="blink" className="flex items-center justify-center"><Zap className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Blink</TabsTrigger>
+          <TabsTrigger value="donations" className="flex items-center justify-center"><Coins className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Donations</TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center justify-center"><CreditCard className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Payments</TabsTrigger>
+          <TabsTrigger value="nft" className="flex items-center justify-center"><PlusCircle className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Mint NFT</TabsTrigger>
+          <TabsTrigger value="crowdfunding" className="flex items-center justify-center"><Landmark className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Crowdfunding</TabsTrigger>
+          <TabsTrigger value="gift" className="flex items-center justify-center"><Gift className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Gift</TabsTrigger>
+          <TabsTrigger value="merchant" className="flex items-center justify-center"><Store className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />Merchant</TabsTrigger>
         </TabsList>
         
         <TabsContent value="blink">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><Zap className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Create a New Blink</CardTitle>
+              <CardTitle className="flex items-center"><Zap className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Create a New Blink</CardTitle>
               <CardDescription>Set up your Blink for instant payments.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -172,14 +171,7 @@ export default function GetStartedPage() {
                   </div>
                 </div>
                 <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Blink'
-                  )}
+                  {isLoading ? 'Creating...' : 'Create Blink'}
                 </Button>
               </form>
             </CardContent>
@@ -189,7 +181,7 @@ export default function GetStartedPage() {
         <TabsContent value="donations">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><Coins className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Process Donations</CardTitle>
+              <CardTitle className="flex items-center"><Coins className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Process Donations</CardTitle>
               <CardDescription>Receive donations for your cause.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -205,14 +197,7 @@ export default function GetStartedPage() {
                   </div>
                 </div>
                 <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    'Process Donation'
-                  )}
+                  {isLoading ? 'Processing...' : 'Process Donation'}
                 </Button>
               </form>
             </CardContent>
@@ -222,7 +207,7 @@ export default function GetStartedPage() {
         <TabsContent value="payments">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><CreditCard className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Make a Payment</CardTitle>
+              <CardTitle className="flex items-center"><CreditCard className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Make a Payment</CardTitle>
               <CardDescription>Send payments quickly and securely.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -253,14 +238,7 @@ export default function GetStartedPage() {
                   </div>
                 </div>
                 <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Send Payment'
-                  )}
+                  {isLoading ? 'Sending...' : 'Send Payment'}
                 </Button>
               </form>
             </CardContent>
@@ -270,7 +248,7 @@ export default function GetStartedPage() {
         <TabsContent value="nft">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><PlusCircle className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Mint an NFT</CardTitle>
+              <CardTitle className="flex items-center"><PlusCircle className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Mint an NFT</CardTitle>
               <CardDescription>Create a unique digital asset on the blockchain.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -286,8 +264,7 @@ export default function GetStartedPage() {
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="nftImage">NFT Image URL</Label>
-                    <Input id="nft
-Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} />
+                    <Input id="nftImage" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} />
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="nftCollection">Collection</Label>
@@ -304,7 +281,8 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="nftRoyalty">Royalty Percentage</Label>
-                    <Input id="nftRoyalty" name="nftRoyalty" type="number" min="0" max="100" step="0.1" placeholder="Enter royalty percentage" required />
+                    <Input id="nftRoyalty" name="nftRoyalty" type="number" min="0"
+                    max="100" step="0.1" placeholder="Enter royalty percentage" required />
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch id="nftSoldable" name="nftSoldable" />
@@ -317,17 +295,10 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
                 </div>
                 <div className="flex justify-between items-center mt-4">
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Minting...
-                      </>
-                    ) : (
-                      'Mint NFT'
-                    )}
+                    {isLoading ? 'Minting...' : 'Mint NFT'}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => handleImageDownload(nftImageRef, 'nft-image.png')}>
-                    <Download className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />
+                    <Download className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />
                     Download Image
                   </Button>
                 </div>
@@ -339,7 +310,7 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
         <TabsContent value="crowdfunding">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><Landmark className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Start a Crowdfunding Campaign</CardTitle>
+              <CardTitle className="flex items-center"><Landmark className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Start a Crowdfunding Campaign</CardTitle>
               <CardDescription>Raise funds for your project or cause.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -364,17 +335,10 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
                 </div>
                 <div className="flex justify-between items-center mt-4">
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Starting...
-                      </>
-                    ) : (
-                      'Start Campaign'
-                    )}
+                    {isLoading ? 'Starting...' : 'Start Campaign'}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => handleImageDownload(campaignImageRef, 'campaign-image.png')}>
-                    <Download className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />
+                    <Download className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />
                     Download Image
                   </Button>
                 </div>
@@ -386,7 +350,7 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
         <TabsContent value="gift">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><Gift className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Create or Send a Gift</CardTitle>
+              <CardTitle className="flex items-center"><Gift className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Create or Send a Gift</CardTitle>
               <CardDescription>Spread joy with digital gifts.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -406,14 +370,7 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
                   </div>
                 </div>
                 <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Send Gift'
-                  )}
+                  {isLoading ? 'Sending...' : 'Send Gift'}
                 </Button>
               </form>
             </CardContent>
@@ -423,7 +380,7 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
         <TabsContent value="merchant">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center"><Store className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Create Merchant Account</CardTitle>
+              <CardTitle className="flex items-center"><Store className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />Create Merchant Account</CardTitle>
               <CardDescription>Set up your merchant account to start selling.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -447,21 +404,14 @@ Image" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} 
                   </div>
                 </div>
                 <Alert className="mt-4">
-                  <AlertCircle className="h-4 w-4" aria-hidden="true" style={{color: '#D0BFB4'}} />
+                  <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} />
                   <AlertTitle>Merchant Program Fee</AlertTitle>
                   <AlertDescription>
                     There is a one-time fee of 0.15 SOL to create a merchant account.
                   </AlertDescription>
                 </Alert>
                 <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Merchant Account'
-                  )}
+                  {isLoading ? 'Creating...' : 'Create Merchant Account'}
                 </Button>
               </form>
             </CardContent>
