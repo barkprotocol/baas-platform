@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,21 +12,28 @@ import { AlertCircle, Gift, CreditCard, Coins, PlusCircle, Send, ShoppingBag, Za
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+
+interface ApiResponse {
+  success: boolean;
+}
 
 // Mock API functions (replace these with actual API calls)
-const createBlink = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-const processDonation = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-const makePayment = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-const mintNFT = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-const startCrowdfunding = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-const sendGift = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-const createMerchant = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const createBlink = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const processDonation = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const makePayment = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const mintNFT = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const startCrowdfunding = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const sendGift = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const createMerchant = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
 
 export default function GetStartedPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState('blink')
   const [isLoading, setIsLoading] = useState(false)
+  const nftImageRef = useRef<HTMLInputElement>(null)
+  const campaignImageRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, action: string) => {
     e.preventDefault()
@@ -36,7 +43,7 @@ export default function GetStartedPage() {
     const data = Object.fromEntries(formData.entries())
 
     try {
-      let result;
+      let result: ApiResponse;
       switch (action) {
         case 'blink':
           result = await createBlink(data)
@@ -88,7 +95,17 @@ export default function GetStartedPage() {
     router.push('/') // Changed to navigate to the landing page
   }
 
-  const handleImageDownload = (imageUrl: string, imageName: string) => {
+  const handleImageDownload = (inputRef: React.RefObject<HTMLInputElement>, imageName: string) => {
+    const imageUrl = inputRef.current?.value
+    if (!imageUrl) {
+      toast({
+        title: "Error",
+        description: "No image URL provided.",
+        variant: "destructive",
+      })
+      return
+    }
+
     fetch(imageUrl)
       .then(response => response.blob())
       .then(blob => {
@@ -247,14 +264,40 @@ export default function GetStartedPage() {
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="nftImage">NFT Image URL</Label>
-                    <Input id="nftImage" name="nftImage" placeholder="Enter image URL" required />
+                    <Input id="nftImage" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftCollection">Collection</Label>
+                    <Select name="nftCollection">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a collection" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="collection1">Collection 1</SelectItem>
+                        <SelectItem value="collection2">Collection 2</SelectItem>
+                        <SelectItem value="collection3">Collection 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftRoyalty">Royalty Percentage</Label>
+                    <Input id="nftRoyalty" name="nftRoyalty" type="number" min="0"
+                    max="100" step="0.1" placeholder="Enter royalty percentage" required />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="nftSoldable" name="nftSoldable" />
+                    <Label htmlFor="nftSoldable">List for sale immediately</Label>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftPrice">Price (if listed for sale)</Label>
+                    <Input id="nftPrice" name="nftPrice" type="number" step="0.01" placeholder="Enter price" />
                   </div>
                 </div>
                 <div className="flex justify-between items-center mt-4">
                   <Button type="submit" disabled={isLoading}>
                     {isLoading ? 'Minting...' : 'Mint NFT'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => handleImageDownload(document.getElementById('nftImage')?.value || '', 'nft-image.png')}>
+                  <Button type="button" variant="outline" onClick={() => handleImageDownload(nftImageRef, 'nft-image.png')}>
                     <Download className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />
                     Download Image
                   </Button>
@@ -287,14 +330,14 @@ export default function GetStartedPage() {
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="campaignImage">Campaign Image URL</Label>
-                    <Input id="campaignImage" name="campaignImage" placeholder="Enter image URL" required />
+                    <Input id="campaignImage" name="campaignImage" placeholder="Enter image URL" required ref={campaignImageRef} />
                   </div>
                 </div>
                 <div className="flex justify-between items-center mt-4">
                   <Button type="submit" disabled={isLoading}>
                     {isLoading ? 'Starting...' : 'Start Campaign'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => handleImageDownload(document.getElementById('campaignImage')?.value || '', 'campaign-image.png')}>
+                  <Button type="button" variant="outline" onClick={() => handleImageDownload(campaignImageRef, 'campaign-image.png')}>
                     <Download className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />
                     Download Image
                   </Button>
