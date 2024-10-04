@@ -1,263 +1,131 @@
-# BARK BaaS Platform
-
-**Solana-based blockchain as a service platform built by BARK Protocol**
-
-![BARK BaaS Platform Landing Page](.github/images/landing-page.png)
+# BARK | Blockchain-as-a-Service (BaaS) Platform
+**Proof of Concept**: v0.1.1
 
 ## Overview
 
-The BARK BaaS Platform is a scalable, Solana-powered solution for building decentralized applications, with features like wallet integration, blinks, token management, staking mechanisms, and NFT minting. It comes with a robust API and a user-friendly interface to streamline blockchain interactions.
+The **BARK Protocol's Blockchain-as-a-Service (BaaS) Platform** simplifies decentralized application and Solana Blinks development by providing robust tools and services built on the Solana network. It empowers developers to create decentralized applications (dApps) with integrated features like wallet management, blink transactions, token handling, staking mechanisms, and NFT minting.
 
-## Use Cases
+![BARK Protocol Overview](.github/images/overview.png)
 
-![BARK Blink Creation Page](.github/images/app.png)
+The platform offers a comprehensive API, user-friendly interface, and payment integration to streamline complex blockchain operations, making dApp deployment and management easier than ever.
+
+## Key Features
+
+- **Solana Blinks**: Create, send, and receive Solana blinks for seamless transactions and interactions to enhance user experience.
+- **Blink Transactions**: Streamlined transaction processes to enhance user experience.
+- **Commerce**: Built-in support for gift, donation, and crowdfunding functionalities.
+- **User & Asset Management**: Efficient management of SPL tokens, including BARK, minting, transferring, and burning.
+- **Staking Mechanisms**: Allow users to stake NFTs and tokens and earn rewards.
+- **NFT Minting**: Easy creation and management of compressed NFTs (CNFT) on the Solana blockchain.
+- **NFT Marketplace**: A dedicated marketplace for users to trade and manage their NFTs.
+- **Social Finance**: Tools for community engagement, fundraising, and collaborative financial projects.
+- **Wallet Management**: Simplified wallet connections for users with support for popular Solana wallets.
+- **Solana login features**: Secure and efficient user authentication using Solana wallets, enabling a seamless login experience for decentralized applications.
+- **Governance**: The BARK Governance DAO (Decentralized Autonomous Organization) is a pivotal part of the BARK Protocol ecosystem, empowering BARK token holders to participate in the governance of the platform.
+
+### Dashboards
+
+![Basic - Dashboard Features](.github/images/basic-dashboard.png)
+
+- Solana Blinks
+
+![Dashboard Features](.github/images/dashboard.png)
 
 ## Tech Stack
 
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Database**: [Postgres](https://www.postgresql.org/)
-- **ORM**: [Drizzle](https://orm.drizzle.team/)
-- **Payments**: [Stripe](https://stripe.com/)
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/)
-- **Blockchain**: [Solana](https://solana.com/)
-- **Smart Contract Framework**: [Anchor](https://www.anchor-lang.com/)
-- **Wallet Integration**: [@solana/wallet-adapter](https://github.com/solana-labs/wallet-adapter)
-- **Solana Web3 Library**: [@solana/web3.js](https://solana-labs.github.io/solana-web3.js/)
-- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
-- **API Layer**: [tRPC](https://trpc.io/)
-- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Deployment**: [Vercel](https://vercel.com/)
-- **Testing**: [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-- **Linting**: [ESLint](https://eslint.org/)
-- **Code Formatting**: [Prettier](https://prettier.io/)
-
-## Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-username/bark-baas-platform.git
-```
-
-### 2. Navigate to the project directory:
-
-```bash
-cd bark-baas-platform
-```
-
-### 3. Install dependencies:
-
-```bash
-pnpm install
-```
-
-### 4. Set up environment variables:
-
-- Copy the `.env.example` file to `.env`.
-- Fill in the required values in the `.env` file.
-
-## Running Locally
-
-Use the included setup script to create your `.env` file and set up the database:
-
-```bash
-pnpm db:setup
-```
-
-Then, run the database migrations and seed the database with a default user and team:
-
-```bash
-pnpm db:migrate
-pnpm db:seed
-```
-
-This will create the following credentials:
-
-- **User**: `test@test.com`
-- **Password**: `admin123`
-
-You can create new users via the `/sign-up` route.
-
-### 5. Start the development server:
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to see the app in action.
-
-## Testing Payments
-
-To test Stripe payments, use the following card details:
-
-- **Card Number**: `4242 4242 4242 4242`
-- **Expiration**: Any future date.
-- **CVC**: Any 3-digit number.
-
-You can listen for Stripe webhooks locally via their CLI:
-
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
-
-## Going to Production
-
-### 1. Set up a production Stripe webhook
-
-1. Go to the Stripe Dashboard and create a new webhook.
-2. Set the endpoint URL to your production API route (e.g., `https://yourdomain.com/api/stripe/webhook`).
-3. Select events like `checkout.session.completed` and `customer.subscription.updated`.
-
-### 2. Deploy to Vercel
-
-1. Push your code to GitHub.
-2. Connect your repository to Vercel and deploy it.
-3. Add environment variables in Vercel's project settings:
-    - `BASE_URL`: Your production domain.
-    - `STRIPE_SECRET_KEY`: Your production Stripe secret key.
-    - `STRIPE_WEBHOOK_SECRET`: The webhook secret for Stripe.
-    - `POSTGRES_URL`: Production PostgreSQL database URL.
-    - `AUTH_SECRET`: Generate using `openssl rand -base64 32`.
-
-### Docker
-
-To build and run Docker image:
-
-1. Build the image:
-
-```
-docker build -t bark-baas-platform .
-```
-
-2. Run the container:
-
-```
-docker run -p 3000:3000 bark-baas-platform
-```
-
-## Usage
-
-For detailed usage instructions and API documentation, visit the [official documentation](https://docs.barkprotocol.com).
-
-Here’s a refined version of your **To-Do** list with suggestions for each item:
-
-## To-Do
-
-### **1. Implement Platform e.g. blinkboard (Payment Version)**
-
-**Proof of Concept**: 
-- Clone the repository for the Blinkboard:  
-  `git clone https://github.com/barkprotocol/blinkboard`
-
-**Objective**:  
-Create a **payment-enabled Blinkboard** that facilitates BARK transactions and user interactions.
-
-**Steps**:
-1. **Payment Gateway Integration**:
-   - Integrate **Stripe** for fiat or **Solana Pay** for crypto transactions.
-   - Provide options for both payment methods (optional, depending on user needs).
-  
-2. **Transaction Tracking**:
-   - Implement a **transaction history** feature for tracking and displaying past payments.
-   - Ensure each transaction is linked to a user’s profile.
-
-3. **Real-Time Updates**:
-   - Enable **real-time account balance updates** after each transaction.
-   - Display **transaction status** (pending, complete, failed) in the user interface.
-
-4. **Security**:
-   - Implement **payment security measures** (tokenized payment data, encryption, and key management).
-   - Use secure transaction signing (if using Solana Pay).
-
-5. **Test Environments**:
-   - Test payments in both **testnet** and **mainnet** environments for Solana (or Stripe sandbox for fiat).
-   
-6. **UI/UX**:
-   - Develop **user-friendly UI** for processing payments, with clear instructions, notifications, and error handling.
-
-**Outcome**:  
-A fully integrated **Blinkboard** with secure and trackable payment functionalities, allowing users to make transactions within the BARK ecosystem.
-
----
-
-### **2. Create Blink Application (Get-Started Module), Basic Features**
-
-**Objective**:  
-Build a **Get Started** module for onboarding new users into the Blink system.
-
-**Steps**:
-1. **Onboarding Flow**:
-   - Design a **multi-step onboarding process** guiding users through wallet connection, profile setup, and first transaction.
-
-2. **Step-by-Step Guide**:
-   - Implement a guide to help users **mint NFTs**, **claim airdrops**, or **stake tokens**.
-   
-3. **Interactive Dashboard**:
-   - Provide a dashboard with essential actions (e.g., **view NFTs**, **stake tokens**, **claim rewards**).
-
-4. **Educational Component**:
-   - Include brief **tutorials or tooltips** explaining the main features (e.g., staking, rewards, and BARK ecosystem benefits).
-
-5. **Wallet Integration**:
-   - Seamlessly integrate with **Phantom**, **Solflare**, and **Backpack** wallets for streamlined user access.
-
-6. **Responsive Design**:
-   - Ensure the **module is fully responsive**, optimized for both desktop and mobile users.
-
-**Outcome**:  
-A streamlined **Get Started module** that educates and enables new users to begin using Blink features, such as minting, staking, and exploring the ecosystem.
-
----
-
-### **3. Create Modular Pages**
-
-**Objective**:  
-Design flexible, reusable **modular pages** to enhance the scalability and ease of development for future updates.
-
-**Steps**:
-1. **Modular Page Template**:
-   - Create a **page template** that can be repurposed for sections like the marketplace, staking, or dashboards.
-
-2. **Reusable Components**:
-   - Build **reusable UI components** (cards, modals, forms) that can be customized and deployed across different sections.
-
-3. **Dynamic Routing**:
-   - Set up **dynamic routing** to support multiple pages, such as `/dashboard`, `/marketplace`, and `/staking`.
-
-4. **Lazy Loading**:
-   - Implement **lazy loading** to improve page load times, only rendering necessary components for each section.
-
-5. **Scalability**:
-   - Ensure the architecture is scalable, allowing new pages and components to be added without major refactoring.
-
-6. **Theming and Styling**:
-   - Use the **dark gray, sand color palette** along with **Google Fonts (Oswald, Poppins Light)** to maintain consistency with existing pages.
-   - Ensure the design is **accessible**, focusing on color contrast and text readability.
-
-**Outcome**:  
-A set of **modular, scalable pages** that can easily be extended or modified to add new content and features to the BARK platform.
-
----
-
-### **Next Steps**:
-1. **Prioritization**:  
-   Determine which feature to implement first based on **business needs** (e.g., if payment functionality is more urgent, start with Blinkboard).
-
-2. **Timeline**:  
-   Develop a **timeline or roadmap** with clear milestones and deadlines for each feature.
-
-3. **Parallel Development**:  
-   If you have multiple team members, **divide tasks** for parallel development, or proceed **sequentially** if working solo.
+The BARK Protocol is built on a modern technology stack designed for scalability, performance, and ease of use:
+
+- **Next.js**
+- **TypeScript**
+- **React**
+- **Tailwind CSS**
+- **Solana**
+- **Supabase**
+- **Anchor**
+- **Mantine**
+- **Wallet Adapter**
+- **Vercel**
+
+### Additional Libraries and Tools
+
+- **express-validator**
+- **dotenv**
+- **axios**
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/barkprotocol/bark-as-a-service.git
+   cd bark-protocol
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up your environment variables. Create a `.env` file in the root directory and add the following variables:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_SOLANA_NETWORK=devnet
+   NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+   NEXT_PUBLIC_MINT_API_URL=https://api.actions.barkprotocol.net/mint
+   TOKEN_PROGRAM_ID=TokenkegQfeZyiNwAJbNbGKPFXkQd5J8X8wnF8MPzYx
+   NFT_PROGRAM_ID=gEb7nD9yLkau1P4uyMdke9byJNrat61suH4vYiPUuiR
+   DEFAULT_WALLET_ADDRESS=gEb7nD9yLkau1P4uyMdke9byJNrat61suH4vYiPUuiR
+   WALLETCONNECT_BRIDGE=https://bridge.walletconnect.org
+   METADATA_SERVICE_URL=https://api.example.com/upload-metadata
+   ERROR_TRACKING_SERVICE_URL=https://errors.example.com/report
+   SECRET_KEY=your-secret-key-here
+   JWT_SECRET=your-jwt-secret-key-here
+   NODE_ENV=development
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+### API Documentation
+
+- **BARK Protocol API**: Detailed documentation for all available API endpoints, request/response formats, and examples.
+  - [API Documentation Link](https://api.barkprotocol.net/docs)
+
+## References
+
+- **Solana**: Information on the Solana blockchain for interacting with Solana programs.
+  - [Solana Documentation](https://docs.solana.com/)
+
+- **Anchor Framework**: A comprehensive guide on using Anchor for Solana smart contract development.
+  - [Anchor Documentation](https://www.anchor-lang.com/)
+
+- **Wallet Adapter**: Documentation on the wallet adapter library for integrating various Solana wallets.
+  - [Wallet Adapter Documentation](https://github.com/solana-labs/wallet-adapter)
+
+- **Express Validator**: Guide for input validation in Node.js applications using express-validator.
+  - [Express Validator Documentation](https://express-validator.github.io/docs/)
+
+- **Tailwind CSS**: Official documentation for the utility-first CSS framework used in the project.
+  - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+- **Next.js**: Comprehensive guide to Next.js features and best practices.
+  - [Next.js Documentation](https://nextjs.org/docs)
+
+- **Supabase**: Documentation for the open-source Firebase alternative that provides database and authentication services.
+  - [Supabase Documentation](https://supabase.com/docs)
+
+- **Mantine**: A React component library that provides prebuilt components and hooks.
+  - [Mantine Documentation](https://mantine.dev/docs/getting-started/)
+
+- **Vercel**: Documentation for deploying and hosting your Next.js applications with Vercel.
+  - [Vercel Documentation](https://vercel.com/docs)
 
 ## Contributing
 
-We welcome contributions to the BARK BaaS Platform! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please fork the repository and submit a pull request for any enhancements or bug fixes.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Contact
-
-For support, reach out to us at [support@barkprotocol.com](mailto:support@barkprotocol.com) or join our [X community](https://x.com/bark_protocol).
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
