@@ -81,8 +81,8 @@ export function Hero() {
           </Badge>
           <motion.div className="space-y-4" variants={childVariants}>
             <h1 className="text-3xl font-extrabold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl/none">
-              <span className="block text-foreground dark:text-white">Unleash the Power of</span>
-              <span className="block text-primary dark:text-primary-foreground font-black">
+              <span className="block text-foreground dark:text-gray-100">Unleash the Power of</span>
+              <span className="block text-primary dark:text-primary font-black">
                 Blockchain As A Service Platform
               </span>
             </h1>
@@ -103,7 +103,7 @@ export function Hero() {
             <Link href="/pages/blinkboard" passHref>
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary-foreground dark:text-primary dark:hover:bg-primary-foreground/90 transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
+                className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90 transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
@@ -115,7 +115,7 @@ export function Hero() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:border-primary-foreground dark:text-primary-foreground dark:hover:bg-primary-foreground dark:hover:text-primary transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
+                className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:border-primary dark:text-primary dark:hover:bg-primary dark:hover:text-primary-foreground transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
               >
                 Create Blink
                 <Plus className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
