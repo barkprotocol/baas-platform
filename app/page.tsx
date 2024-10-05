@@ -2,6 +2,7 @@ import { Header } from "@/components/ui/layout/header"
 import { Hero } from "@/components/ui/layout/hero"
 import { Features } from "@/components/ui/layout/features"
 import { About } from "@/components/ui/layout/about"
+import { Pricing } from "@/components/ui/layout/pricing"
 import { CTA } from "@/components/ui/layout/cta"
 import { FAQ } from "@/components/ui/layout/faq"
 import { Newsletter } from "@/components/ui/layout/newsletter"
@@ -16,6 +17,7 @@ export default function LandingPage() {
           <Hero />
           <Features />
           <About />
+          <Pricing />
           <CTA />
           <FAQ />
           <Newsletter />

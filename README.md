@@ -5,7 +5,7 @@
 
 The **BARK Protocol's Blockchain-as-a-Service (BaaS) Platform** simplifies decentralized application and Solana Blinks development by providing robust tools and services built on the Solana network. It empowers developers to create decentralized applications (dApps) with integrated features like wallet management, blink transactions, token handling, staking mechanisms, and NFT minting.
 
-![BARK Protocol Overview](.github/images/overview.png)
+![BARK Protocol Overview](.github/images/landing-page.png)
 
 The platform offers a comprehensive API, user-friendly interface, and payment integration to streamline complex blockchain operations, making dApp deployment and management easier than ever.
 
@@ -23,13 +23,15 @@ The platform offers a comprehensive API, user-friendly interface, and payment in
 - **Solana login features**: Secure and efficient user authentication using Solana wallets, enabling a seamless login experience for decentralized applications.
 - **Governance**: The BARK Governance DAO (Decentralized Autonomous Organization) is a pivotal part of the BARK Protocol ecosystem, empowering BARK token holders to participate in the governance of the platform.
 
-### Dashboards
+### UI/UX Actions & Blinks
 
 ![Basic - Dashboard Features](.github/images/basic-dashboard.png)
 
-- Solana Blinks
+![About BARK Blinks](.github/images/about-blinks.png)
 
-![Dashboard Features](.github/images/dashboard.png)
+![Create new blink](..github/images/create-new-blink.png)
+
+![Pricing example](.github/images/pricing-section.png)
 
 ## Tech Stack
 

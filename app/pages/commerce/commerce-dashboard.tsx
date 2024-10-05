@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
 import ProductList from './products'
-import { createProduct, updateInventory, setupStorefront, importCSV, exportCSV, fetchSalesData, updateMerchantSettings, connectThirdPartyPlatform } from '@/lib/commerce/api'
+import { createProduct, updateInventory, setupStorefront, importCSV, exportCSV, fetchSalesData, updateMerchantSettings, connectThirdPartyPlatform } from '@/lib/e-commerce/api'
 
 const iconColor = "#D0BFB4"
 

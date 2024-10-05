@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search } from 'lucide-react'
 import { useToast } from "@/components/ui/use-toast"
-import { fetchProducts, updateProductQuantity } from '@/lib/commerce/api'
+import { fetchProducts, updateProductQuantity } from '@/lib/e-commerce/api'
 
 interface Product {
   id: string;

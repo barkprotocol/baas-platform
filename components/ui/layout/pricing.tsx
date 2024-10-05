@@ -1,13 +1,19 @@
+'use client'
+
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check } from "lucide-react"
+import { Check, HelpCircle } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const pricingPlans = [
   {
     name: "Starter",
     description: "Perfect for small projects and startups",
-    priceSOL: 10,
-    priceUSDC: 500,
+    priceMonthly: { SOL: 1, USDC: 50, BARK: 100000 },
+    priceYearly: { SOL: 10, USDC: 500, BARK: 1000000 },
     features: [
       "Up to 1,000 transactions per month",
       "Basic analytics",
@@ -18,8 +24,8 @@ const pricingPlans = [
   {
     name: "Pro",
     description: "Ideal for growing businesses",
-    priceSOL: 50,
-    priceUSDC: 2500,
+    priceMonthly: { SOL: 5, USDC: 250, BARK: 500000 },
+    priceYearly: { SOL: 50, USDC: 2500, BARK: 5000000 },
     features: [
       "Up to 10,000 transactions per month",
       "Advanced analytics",
@@ -31,8 +37,8 @@ const pricingPlans = [
   {
     name: "Enterprise",
     description: "For large-scale operations",
-    priceSOL: 200,
-    priceUSDC: 10000,
+    priceMonthly: { SOL: 20, USDC: 1000, BARK: 2000000 },
+    priceYearly: { SOL: 200, USDC: 10000, BARK: 20000000 },
     features: [
       "Unlimited transactions",
       "Real-time analytics",
@@ -44,9 +50,37 @@ const pricingPlans = [
   },
 ]
 
+const iconColor = "#D0BFB4"
+const barkPriceUSD = 0.00001
+
 export function Pricing() {
+  const [isYearly, setIsYearly] = useState(false)
+  const [selectedCurrency, setSelectedCurrency] = useState<'SOL' | 'USDC' | 'BARK'>('SOL')
+
+  const formatCurrency = (value: number, currency: 'SOL' | 'USDC' | 'BARK') => {
+    switch (currency) {
+      case 'SOL':
+        return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      case 'USDC':
+        return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      case 'BARK':
+        return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    }
+  }
+
+  const getUSDEquivalent = (value: number, currency: 'SOL' | 'USDC' | 'BARK') => {
+    switch (currency) {
+      case 'SOL':
+        return value * 50 // Assuming 1 SOL = $50 USD
+      case 'USDC':
+        return value
+      case 'BARK':
+        return value * barkPriceUSD
+    }
+  }
+
   return (
-    <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
+    <section id="pricing" className="w-full py-12 md:py-24 lg:py-32 bg-background">
       <div className="container px-4 md:px-6">
         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-4">
           Simple, Transparent Pricing
@@ -54,6 +88,39 @@ export function Pricing() {
         <p className="text-xl text-muted-foreground text-center mb-8 md:mb-12 lg:mb-16">
           Choose the plan that's right for your business
         </p>
+        <div className="flex justify-center items-center space-x-4 mb-8">
+          <Label htmlFor="billing-toggle" className="text-sm font-medium">
+            Monthly
+          </Label>
+          <Switch
+            id="billing-toggle"
+            checked={isYearly}
+            onCheckedChange={() => setIsYearly(!isYearly)}
+          />
+          <Label htmlFor="billing-toggle" className="text-sm font-medium">
+            Yearly <span className="text-primary">(Save 20%)</span>
+          </Label>
+        </div>
+        <div className="flex justify-center items-center space-x-4 mb-8">
+          <Button
+            variant={selectedCurrency === 'SOL' ? 'default' : 'outline'}
+            onClick={() => setSelectedCurrency('SOL')}
+          >
+            SOL
+          </Button>
+          <Button
+            variant={selectedCurrency === 'USDC' ? 'default' : 'outline'}
+            onClick={() => setSelectedCurrency('USDC')}
+          >
+            USDC
+          </Button>
+          <Button
+            variant={selectedCurrency === 'BARK' ? 'default' : 'outline'}
+            onClick={() => setSelectedCurrency('BARK')}
+          >
+            BARK
+          </Button>
+        </div>
         <div className="grid gap-6 lg:grid-cols-3">
           {pricingPlans.map((plan, index) => (
             <Card key={index} className="flex flex-col">
@@ -62,16 +129,28 @@ export function Pricing() {
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <div className="text-4xl font-bold mb-2">
-                  {plan.priceSOL} SOL
+                <div className="flex flex-col items-start mb-4">
+                  <div className="text-2xl sm:text-3xl font-bold">
+                    {formatCurrency(
+                      isYearly ? plan.priceYearly[selectedCurrency] : plan.priceMonthly[selectedCurrency],
+                      selectedCurrency
+                    )}
+                    <span className="text-lg sm:text-xl font-normal ml-1">{selectedCurrency}</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {isYearly ? '/year' : '/month'}
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground mb-6">
-                  or {plan.priceUSDC} USDC per month
+                <div className="text-sm text-muted-foreground mb-4">
+                  ≈ ${getUSDEquivalent(
+                    isYearly ? plan.priceYearly[selectedCurrency] : plan.priceMonthly[selectedCurrency],
+                    selectedCurrency
+                  ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </div>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mt-4">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center">
-                      <Check className="mr-2 h-4 w-4 text-primary" />
+                      <Check className="mr-2 h-4 w-4" style={{ color: iconColor }} />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
@@ -82,6 +161,20 @@ export function Pricing() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+        <div className="mt-12 text-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="link" className="text-sm text-muted-foreground">
+                  Need help choosing? <HelpCircle className="ml-1 h-4 w-4" style={{ color: iconColor }} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Contact our sales team for personalized assistance</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </section>

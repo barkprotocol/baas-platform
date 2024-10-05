@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -39,6 +40,13 @@ const DONATION_ADDRESSES = {
 
 // Donation goal
 const DONATION_GOAL = 100000;
+
+// Currency icons
+const CURRENCY_ICONS = {
+  BARK: '/assets/icons/bark.png',
+  SOL: '/assets/icons/sol.png',
+  USDC: '/assets/icons/usdc.png',
+};
 
 export default function DonationsPage() {
   const router = useRouter()
@@ -133,12 +141,12 @@ export default function DonationsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold">Donations</h1>
         <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} /> Back to Main
+          <ArrowLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" /> Back to Main
         </Button>
       </div>
 
       <Alert className="mb-6">
-        <Heart className="h-4 w-4" style={{color: '#D0BFB4'}} />
+        <Heart className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
         <AlertTitle>Support Our Causes</AlertTitle>
         <AlertDescription>
           Your donations help us make a difference in various charitable causes and support the BARK Protocol. Thank you for your generosity!
@@ -149,7 +157,7 @@ export default function DonationsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <DollarSign className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} />
+              <DollarSign className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} aria-hidden="true" />
               Make a Donation
             </CardTitle>
             <CardDescription>Choose your donation method, amount, and cause.</CardDescription>
@@ -176,13 +184,18 @@ export default function DonationsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="currency">Currency</Label>
                     <Select value={selectedCurrency} onValueChange={setSelectedCurrency} required>
-                      <SelectTrigger>
+                      <SelectTrigger id="currency">
                         <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="USDC">USDC</SelectItem>
-                        <SelectItem value="BARK">BARK</SelectItem>
-                        <SelectItem value="SOL">SOL</SelectItem>
+                        {Object.entries(CURRENCY_ICONS).map(([currency, iconPath]) => (
+                          <SelectItem key={currency} value={currency}>
+                            <div className="flex items-center">
+                              <Image src={iconPath} alt={`${currency} icon`} width={24} height={24} className="mr-2" />
+                              {currency}
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -223,9 +236,9 @@ export default function DonationsPage() {
               <TabsContent value="address">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Select Donation Recipient</Label>
+                    <Label htmlFor="recipient-select">Select Donation Recipient</Label>
                     <Select value={selectedRecipient} onValueChange={setSelectedRecipient}>
-                      <SelectTrigger>
+                      <SelectTrigger id="recipient-select">
                         <SelectValue placeholder="Select recipient" />
                       </SelectTrigger>
                       <SelectContent>
@@ -236,17 +249,16 @@ export default function DonationsPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Donation Address</Label>
+                    <Label htmlFor="donation-address">Donation Address</Label>
                     <div className="flex items-center space-x-2">
-                      <Input value={DONATION_ADDRESSES[selectedRecipient]} readOnly />
-                      <Button variant="outline" size="icon" onClick={copyToClipboard}>
-                        <span className="sr-only">Copy donation address</span>
-                        {copiedAddress ? <CheckCircle className="h-4 w-4" style={{color: '#D0BFB4'}} /> : <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} />}
+                      <Input id="donation-address" value={DONATION_ADDRESSES[selectedRecipient]} readOnly />
+                      <Button variant="outline" size="icon" onClick={copyToClipboard} aria-label="Copy donation address">
+                        {copiedAddress ? <CheckCircle className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" /> : <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />}
                       </Button>
                     </div>
                   </div>
                   <Alert>
-                    <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} />
+                    <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
                     <AlertDescription>
                       Send your donations directly to this address. Make sure to use the correct network for your transaction.
                     </AlertDescription>
@@ -257,8 +269,8 @@ export default function DonationsPage() {
           </CardContent>
           <CardFooter>
             <div className="w-full space-y-2">
-              <Label>Progress Towards Our Goal</Label>
-              <Progress value={(totalDonations / DONATION_GOAL) * 100} className="w-full" />
+              <Label htmlFor="donation-progress">Progress Towards Our Goal</Label>
+              <Progress id="donation-progress" value={(totalDonations / DONATION_GOAL) * 100} className="w-full" />
               <p className="text-sm text-gray-500">
                 ${totalDonations.toLocaleString()} raised of ${DONATION_GOAL.toLocaleString()} goal
               </p>
@@ -286,7 +298,12 @@ export default function DonationsPage() {
                 {recentDonations.map((donation) => (
                   <TableRow key={donation.id}>
                     <TableCell>{donation.amount}</TableCell>
-                    <TableCell>{donation.currency}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Image src={CURRENCY_ICONS[donation.currency]} alt={`${donation.currency} icon`} width={24} height={24} className="mr-2" />
+                        {donation.currency}
+                      </div>
+                    </TableCell>
                     <TableCell>{donation.donor}</TableCell>
                     <TableCell>{donation.recipient}</TableCell>
                     <TableCell>{donation.date}</TableCell>
@@ -297,7 +314,7 @@ export default function DonationsPage() {
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button variant="outline" onClick={() => loadMoreDonations(true)}>
-              <RefreshCw className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} />
+              <RefreshCw className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
               Refresh
             </Button>
             {hasMore && (
@@ -310,7 +327,7 @@ export default function DonationsPage() {
       </div>
 
       <Alert className="mt-6">
-        <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} />
+        <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
         <AlertTitle>Donation Information</AlertTitle>
         <AlertDescription>
           All donations are processed securely using blockchain technology. Your support helps us make a difference in various charitable causes and maintain the BARK Protocol. For large donations or special arrangements, please contact our team directly.

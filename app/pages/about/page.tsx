@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -50,6 +51,45 @@ export default function AboutPage() {
     }
   }
 
+  const features = [
+    { title: "Easy Integration", description: "Seamlessly integrate blockchain into your existing systems", icon: <Zap className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
+    { title: "Secure Transactions", description: "Ensure the safety and integrity of all your transactions", icon: <Shield className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
+    { title: "Multi-Currency Support", description: "Handle various cryptocurrencies with ease", icon: <Coins className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
+    { title: "Smart Contract Management", description: "Create, deploy, and manage smart contracts effortlessly", icon: <FileCode className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
+    { title: "Real-time Analytics", description: "Gain insights with our powerful analytics tools", icon: <BarChart2 className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
+    { title: "Solana Blinks", description: "Perform transactions on social media platforms through Dialect", icon: <Share2 className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> }
+  ]
+
+  const faqs = [
+    { 
+      question: "What is Blockchain-as-a-Service?", 
+      answer: "Blockchain-as-a-Service (BaaS) is a cloud-based service that allows customers to develop, host, and use their own blockchain apps, smart contracts, and functions on the blockchain while the cloud-based service provider manages all the necessary tasks and activities to keep the infrastructure agile and operational."
+    },
+    { 
+      question: "How secure is the BARK BaaS Platform?", 
+      answer: "We prioritize security at every level. Our platform uses state-of-the-art encryption, regular security audits, and follows best practices in blockchain security to ensure the safety and integrity of all transactions and data on our platform."
+    },
+    { 
+      question: "Can I integrate BARK BaaS with my existing systems?", 
+      answer: "Yes, BARK BaaS is designed for easy integration with existing systems. We provide comprehensive APIs and documentation to help you seamlessly incorporate our blockchain services into your current infrastructure."
+    },
+    { 
+      question: "What cryptocurrencies does BARK BaaS support?", 
+      answer: "BARK BaaS supports a wide range of cryptocurrencies, including but not limited to USDC, BARK, and SOL. We're constantly expanding our support for different tokens to meet our clients' needs."
+    },
+    {
+      question: "How do Solana Blinks work with social media platforms?",
+      answer: "Solana Blinks allow you to perform blockchain transactions directly through various social media platforms. By integrating with Dialect, we enable users to initiate and confirm transactions using simple commands within their social media interactions, all secured and processed on the Solana blockchain."
+    }
+  ]
+
+  const partners = [
+    { name: "Solana", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "Dialect", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "USDC", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "Phantom", logo: "/placeholder.svg?height=100&width=100" },
+  ]
+
   return (
     <>
       <Head>
@@ -88,14 +128,7 @@ export default function AboutPage() {
         <section className="mb-16">
           <h2 className="text-3xl font-semibold mb-8 text-center">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { title: "Easy Integration", description: "Seamlessly integrate blockchain into your existing systems", icon: <Zap className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-              { title: "Secure Transactions", description: "Ensure the safety and integrity of all your transactions", icon: <Shield className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-              { title: "Multi-Currency Support", description: "Handle various cryptocurrencies with ease", icon: <Coins className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-              { title: "Smart Contract Management", description: "Create, deploy, and manage smart contracts effortlessly", icon: <FileCode className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-              { title: "Real-time Analytics", description: "Gain insights with our powerful analytics tools", icon: <BarChart2 className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-              { title: "Solana Blinks", description: "Perform transactions on social media platforms through Dialect", icon: <Share2 className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> }
-            ].map((feature, index) => (
+            {features.map((feature, index) => (
               <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="p-6">
                   {feature.icon}
@@ -148,28 +181,7 @@ export default function AboutPage() {
         <section className="mb-16">
           <h2 className="text-3xl font-semibold mb-8 text-center">Frequently Asked Questions</h2>
           <Accordion type="single" collapsible className="w-full">
-            {[
-              { 
-                question: "What is Blockchain-as-a-Service?", 
-                answer: "Blockchain-as-a-Service (BaaS) is a cloud-based service that allows customers to develop, host, and use their own blockchain apps, smart contracts, and functions on the blockchain while the cloud-based service provider manages all the necessary tasks and activities to keep the infrastructure agile and operational."
-              },
-              { 
-                question: "How secure is the BARK BaaS Platform?", 
-                answer: "We prioritize security at every level. Our platform uses state-of-the-art encryption, regular security audits, and follows best practices in blockchain security to ensure the safety and integrity of all transactions and data on our platform."
-              },
-              { 
-                question: "Can I integrate BARK BaaS with my existing systems?", 
-                answer: "Yes, BARK BaaS is designed for easy integration with existing systems. We provide comprehensive APIs and documentation to help you seamlessly incorporate our blockchain services into your current infrastructure."
-              },
-              { 
-                question: "What cryptocurrencies does BARK BaaS support?", 
-                answer: "BARK BaaS supports a wide range of cryptocurrencies, including but not limited to USDC, BARK, and SOL. We're constantly expanding our support for different tokens to meet our clients' needs."
-              },
-              {
-                question: "How do Solana Blinks work with social media platforms?",
-                answer: "Solana Blinks allow you to perform blockchain transactions directly through various social media platforms. By integrating with Dialect, we enable users to initiate and confirm transactions using simple commands within their social media interactions, all secured and processed on the Solana blockchain."
-              }
-            ].map((faq, index) => (
+            {faqs.map((faq, index) => (
               <AccordionItem value={`item-${index}`} key={index} className="border-b border-gray-200">
                 <AccordionTrigger className="text-lg font-medium py-4">{faq.question}</AccordionTrigger>
                 <AccordionContent className="py-4 text-gray-600">{faq.answer}</AccordionContent>
@@ -181,14 +193,9 @@ export default function AboutPage() {
         <section className="mb-16">
           <h2 className="text-3xl font-semibold mb-8 text-center">Our Partners</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { name: "Solana", logo: "/placeholder.svg?height=100&width=100" },
-              { name: "Dialect", logo: "/placeholder.svg?height=100&width=100" },
-              { name: "USDC", logo: "/placeholder.svg?height=100&width=100" },
-              { name: "Phantom", logo: "/placeholder.svg?height=100&width=100" },
-            ].map((partner, index) => (
+            {partners.map((partner, index) => (
               <div key={index} className="flex flex-col items-center">
-                <img src={partner.logo} alt={`${partner.name} logo`} className="w-24 h-24 object-contain mb-2" />
+                <Image src={partner.logo} alt={`${partner.name} logo`} width={100} height={100} className="object-contain mb-2" />
                 <p className="text-center font-semibold">{partner.name}</p>
               </div>
             ))}

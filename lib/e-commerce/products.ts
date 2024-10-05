@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { checkoutAction } from '@/lib/payments/actions'
 import { Check, Info } from 'lucide-react'
 import { getStripePrices } from '@/lib/payments/stripe'
-import { getCommerceProducts } from '@/lib/commerce/products'
+import { getCommerceProducts } from '@/lib/e-commerce/products'
 import { getSolanaPrices } from '@/lib/payments/solana-pay'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"

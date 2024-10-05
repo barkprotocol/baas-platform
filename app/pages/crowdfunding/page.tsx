@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { ArrowLeft, AlertCircle, Users, Rocket, Search, ChevronLeft, ChevronRight, Copy, CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, AlertCircle, Users, Rocket, Search, ChevronLeft, ChevronRight, Copy, Eye, EyeOff } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -30,11 +29,6 @@ const fetchCampaigns = async () => new Promise(resolve => setTimeout(() => resol
   { id: 7, title: 'Youth Sports Program', description: 'Provide sports equipment and coaching for underprivileged youth', goal: 18000, raised: 10000, backers: 220, daysLeft: 18, image: '/placeholder.svg?height=200&width=400', programId: 'Program7777777777777777777777777777777777777', escrowAddress: 'Escrow77777777777777777777777777777777777777' },
   { id: 8, title: 'Elderly Care Technology', description: 'Develop smart home technology for senior citizens', goal: 30000, raised: 22000, backers: 400, daysLeft: 8, image: '/placeholder.svg?height=200&width=400', programId: 'Program8888888888888888888888888888888888888', escrowAddress: 'Escrow88888888888888888888888888888888888888' },
 ]), 1000));
-
-const contributeToCampaign = async (campaignId: number, amount: number, currency: string, programId: string, escrowAddress: string) => {
-  // This is a mock function. In a real application, this would interact with the Solana program.
-  return new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: 'tx-id' }), 1000));
-};
 
 export default function CrowdfundingPage() {
   const router = useRouter()
@@ -80,7 +74,6 @@ export default function CrowdfundingPage() {
       const amount = parseFloat(contributionAmount)
       const lamports = amount * LAMPORTS_PER_SOL
 
-      // Create a new transaction
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: wallet.publicKey,
@@ -89,10 +82,7 @@ export default function CrowdfundingPage() {
         })
       )
 
-      // Sign and send the transaction
       const signature = await wallet.sendTransaction(transaction, connection)
-
-      // Confirm the transaction
       const result = await connection.confirmTransaction(signature, 'confirmed')
 
       if (result.value.err === null) {
@@ -102,7 +92,7 @@ export default function CrowdfundingPage() {
         })
         setContributionAmount('')
         setSelectedCampaign(null)
-        loadCampaigns() // Refresh campaigns to update the raised amount
+        loadCampaigns()
       } else {
         throw new Error('Transaction failed')
       }
@@ -161,12 +151,12 @@ export default function CrowdfundingPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold">Crowdfunding Campaigns</h1>
         <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} /> Back to Main
+          <ArrowLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" /> Back to Main
         </Button>
       </div>
 
       <Alert className="mb-6">
-        <Rocket className="h-4 w-4" style={{color: '#D0BFB4'}} />
+        <Rocket className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
         <AlertTitle>Support Innovative Projects</AlertTitle>
         <AlertDescription>
           Browse and contribute to exciting crowdfunding campaigns. Your support can make a difference!
@@ -184,7 +174,7 @@ export default function CrowdfundingPage() {
             className="mr-2"
           />
           <Button onClick={loadCampaigns} variant="outline">
-            <Search className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} />
+            <Search className="w-4 h-4 mr-2" style={{color: '#D0BFB4'}} aria-hidden="true" />
             Refresh
           </Button>
         </div>
@@ -216,7 +206,7 @@ export default function CrowdfundingPage() {
                       <span>${campaign.goal.toLocaleString()} goal</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span><Users className="inline mr-1 h-4 w-4" style={{color: '#D0BFB4'}} />{campaign.backers} backers</span>
+                      <span><Users className="inline mr-1 h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />{campaign.backers} backers</span>
                       <span>{campaign.daysLeft} days left</span>
                     </div>
                     <Button 
@@ -227,12 +217,12 @@ export default function CrowdfundingPage() {
                     >
                       {showProgramDetails[campaign.id] ? (
                         <>
-                          <EyeOff className="h-4 w-4 mr-2" style={{color: '#D0BFB4'}} />
+                          <EyeOff className="h-4 w-4 mr-2" style={{color: '#D0BFB4'}} aria-hidden="true" />
                           Hide Program Details
                         </>
                       ) : (
                         <>
-                          <Eye className="h-4 w-4 mr-2" style={{color: '#D0BFB4'}} />
+                          <Eye className="h-4 w-4 mr-2" style={{color: '#D0BFB4'}} aria-hidden="true" />
                           Show Program Details
                         </>
                       )}
@@ -243,14 +233,14 @@ export default function CrowdfundingPage() {
                           <span className="font-semibold">Program ID: </span>
                           <span className="truncate">{campaign.programId}</span>
                           <Button variant="ghost" size="sm" className="ml-2" onClick={() => copyToClipboard(campaign.programId)}>
-                            <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} />
+                            <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
                           </Button>
                         </div>
                         <div className="text-sm">
                           <span className="font-semibold">Escrow Address: </span>
                           <span className="truncate">{campaign.escrowAddress}</span>
                           <Button variant="ghost" size="sm" className="ml-2" onClick={() => copyToClipboard(campaign.escrowAddress)}>
-                            <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} />
+                            <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -297,20 +287,20 @@ export default function CrowdfundingPage() {
           </div>
           <div className="mt-6 flex justify-between items-center">
             <Button onClick={prevPage} disabled={currentPage === 1} variant="outline">
-              <ChevronLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} />
+              <ChevronLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
               Previous
             </Button>
             <span>Page {currentPage} of {totalPages}</span>
             <Button onClick={nextPage} disabled={currentPage === totalPages} variant="outline">
               Next
-              <ChevronRight className="ml-2 h-4 w-4" style={{color: '#D0BFB4'}} />
+              <ChevronRight className="ml-2 h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
             </Button>
           </div>
         </>
       )}
 
       <Alert className="mt-6">
-        <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} />
+        <AlertCircle className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />
         <AlertTitle>Crowdfunding Information</AlertTitle>
         <AlertDescription>
           All contributions are processed securely using Solana blockchain technology. Each campaign has its own Solana program and escrow address. Funds are only released to project creators when funding goals are met. For large contributions or special arrangements, please contact our team directly.
