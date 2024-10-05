@@ -1,6 +1,6 @@
 import { stripe } from '../payments/stripe';
 import { db } from './drizzle';
-import { users, teams, teamMembers } from './schema';
+import { users, teams, barkMembers } from './schema';
 import { hashPassword } from '@/lib/auth/session';
 
 async function createStripeProducts() {
@@ -64,7 +64,7 @@ async function seed() {
     })
     .returning();
 
-  await db.insert(teamMembers).values({
+  await db.insert(barkMembers).values({
     teamId: team.id,
     userId: user.id,
     role: 'owner',

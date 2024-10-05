@@ -31,7 +31,7 @@ export const teams = pgTable('teams', {
   subscriptionStatus: varchar('subscription_status', { length: 20 }),
 });
 
-export const teamMembers = pgTable('team_members', {
+export const barkMembers = pgTable('team_members', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
     .notNull()
@@ -69,13 +69,13 @@ export const invitations = pgTable('invitations', {
 });
 
 export const teamsRelations = relations(teams, ({ many }) => ({
-  teamMembers: many(teamMembers),
+  barkMembers: many(barkMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
-  teamMembers: many(teamMembers),
+  barkMembers: many(barkMembers),
   invitationsSent: many(invitations),
 }));
 
@@ -90,13 +90,13 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
   }),
 }));
 
-export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+export const barkMembersRelations = relations(barkMembers, ({ one }) => ({
   user: one(users, {
-    fields: [teamMembers.userId],
+    fields: [barkMembers.userId],
     references: [users.id],
   }),
   team: one(teams, {
-    fields: [teamMembers.teamId],
+    fields: [barkMembers.teamId],
     references: [teams.id],
   }),
 }));
@@ -116,14 +116,14 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
-export type TeamMember = typeof teamMembers.$inferSelect;
-export type NewTeamMember = typeof teamMembers.$inferInsert;
+export type TeamMember = typeof barkMembers.$inferSelect;
+export type NewTeamMember = typeof barkMembers.$inferInsert;
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
 export type TeamDataWithMembers = Team & {
-  teamMembers: (TeamMember & {
+  barkMembers: (TeamMember & {
     user: Pick<User, 'id' | 'name' | 'email'>;
   })[];
 };

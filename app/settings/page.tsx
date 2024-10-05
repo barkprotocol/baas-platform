@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getDataForUser, getUser } from '@/lib/db/queries';
-import { Settings } from '@/components/settings/settings';
+import { Settings } from '@/dashboard/settings/settings';
 
 export default async function SettingsPage() {
   const user = await getUser();
@@ -15,5 +15,5 @@ export default async function SettingsPage() {
     throw new Error('User data not found');
   }
 
-  return <Settings userData={userData} />;
+  return <Settings />;
 }

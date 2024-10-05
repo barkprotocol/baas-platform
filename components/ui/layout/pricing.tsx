@@ -7,6 +7,8 @@ import { Check, HelpCircle } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useTheme } from 'next-themes'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 const pricingPlans = [
   {
@@ -50,12 +52,13 @@ const pricingPlans = [
   },
 ]
 
-const iconColor = "#D0BFB4"
 const barkPriceUSD = 0.00001
+const iconColor = "#BBA597"
 
 export function Pricing() {
   const [isYearly, setIsYearly] = useState(false)
   const [selectedCurrency, setSelectedCurrency] = useState<'SOL' | 'USDC' | 'BARK'>('SOL')
+  const { theme } = useTheme()
 
   const formatCurrency = (value: number, currency: 'SOL' | 'USDC' | 'BARK') => {
     switch (currency) {
@@ -80,9 +83,9 @@ export function Pricing() {
   }
 
   return (
-    <section id="pricing" className="w-full py-12 md:py-24 lg:py-32 bg-background">
+    <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
       <div className="container px-4 md:px-6">
-        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-4">
+        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-4 text-gray-900 dark:text-white">
           Simple, Transparent Pricing
         </h2>
         <p className="text-xl text-muted-foreground text-center mb-8 md:mb-12 lg:mb-16">
@@ -101,36 +104,23 @@ export function Pricing() {
             Yearly <span className="text-primary">(Save 20%)</span>
           </Label>
         </div>
-        <div className="flex justify-center items-center space-x-4 mb-8">
-          <Button
-            variant={selectedCurrency === 'SOL' ? 'default' : 'outline'}
-            onClick={() => setSelectedCurrency('SOL')}
-          >
-            SOL
-          </Button>
-          <Button
-            variant={selectedCurrency === 'USDC' ? 'default' : 'outline'}
-            onClick={() => setSelectedCurrency('USDC')}
-          >
-            USDC
-          </Button>
-          <Button
-            variant={selectedCurrency === 'BARK' ? 'default' : 'outline'}
-            onClick={() => setSelectedCurrency('BARK')}
-          >
-            BARK
-          </Button>
-        </div>
+        <Tabs defaultValue="SOL" className="w-full mb-8" onValueChange={(value) => setSelectedCurrency(value as 'SOL' | 'USDC' | 'BARK')}>
+          <TabsList className="grid w-full grid-cols-3 max-w-[400px] mx-auto">
+            <TabsTrigger value="SOL">SOL</TabsTrigger>
+            <TabsTrigger value="USDC">USDC</TabsTrigger>
+            <TabsTrigger value="BARK">BARK</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="grid gap-6 lg:grid-cols-3">
           {pricingPlans.map((plan, index) => (
-            <Card key={index} className="flex flex-col">
+            <Card key={index} className="flex flex-col bg-white dark:bg-[#010101] border border-gray-200 dark:border-gray-800">
               <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
+                <CardTitle className="text-gray-900 dark:text-white">{plan.name}</CardTitle>
+                <CardDescription className="text-gray-500 dark:text-gray-400">{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="flex flex-col items-start mb-4">
-                  <div className="text-2xl sm:text-3xl font-bold">
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(
                       isYearly ? plan.priceYearly[selectedCurrency] : plan.priceMonthly[selectedCurrency],
                       selectedCurrency
@@ -151,7 +141,7 @@ export function Pricing() {
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center">
                       <Check className="mr-2 h-4 w-4" style={{ color: iconColor }} />
-                      <span className="text-sm">{feature}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>

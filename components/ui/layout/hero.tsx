@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Rocket, ChevronDown, Plus } from "lucide-react"
 import { motion, useAnimation } from "framer-motion"
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 
 export function Hero() {
   const [isHovered, setIsHovered] = useState(false)
@@ -15,6 +16,7 @@ export function Hero() {
   const router = useRouter()
   const controls = useAnimation()
   const heroRef = useRef<HTMLElement>(null)
+  const { theme } = useTheme()
 
   const handleScroll = useCallback(() => {
     const position = window.scrollY
@@ -66,7 +68,7 @@ export function Hero() {
           transform: 'scale(1.1)',
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background/95"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background/95 dark:from-background/90 dark:to-background"></div>
       <motion.div 
         className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8"
         initial="hidden"
@@ -79,17 +81,17 @@ export function Hero() {
           </Badge>
           <motion.div className="space-y-4" variants={childVariants}>
             <h1 className="text-3xl font-extrabold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl/none">
-              <span className="block text-foreground">Unleash the Power of</span>
-              <span className="block text-primary font-black">
+              <span className="block text-foreground dark:text-white">Unleash the Power of</span>
+              <span className="block text-primary dark:text-primary-foreground font-black">
                 Blockchain As A Service Platform
               </span>
             </h1>
-            <p className="mx-auto max-w-[800px] text-muted-foreground text-lg sm:text-xl md:text-2xl">
+            <p className="mx-auto max-w-[800px] text-muted-foreground dark:text-gray-300 text-lg sm:text-xl md:text-2xl">
               Revolutionize Your World with Solana Blockchain Technology
             </p>
           </motion.div>
           <motion.p 
-            className="text-sm sm:text-base text-muted-foreground max-w-[600px] mb-6"
+            className="text-sm sm:text-base text-muted-foreground dark:text-gray-400 max-w-[600px] mb-6"
             variants={childVariants}
           >
             Experience lightning-fast transactions, unparalleled scalability, and enterprise-grade security. Build, deploy, and scale your decentralized applications with ease. Perfect for businesses, developers, and blockchain enthusiasts alike.
@@ -101,7 +103,7 @@ export function Hero() {
             <Link href="/pages/blinkboard" passHref>
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
+                className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary-foreground dark:text-primary dark:hover:bg-primary-foreground/90 transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
@@ -113,7 +115,7 @@ export function Hero() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
+                className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:border-primary-foreground dark:text-primary-foreground dark:hover:bg-primary-foreground dark:hover:text-primary transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
               >
                 Create Blink
                 <Plus className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
@@ -131,7 +133,7 @@ export function Hero() {
               height={24}
               className="h-6 w-6"
             />
-            <span className="text-sm font-medium text-muted-foreground">Powered by Solana</span>
+            <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Powered by Solana</span>
           </motion.div>
         </div>
       </motion.div>
@@ -140,7 +142,7 @@ export function Hero() {
         animate={controls}
         initial={{ opacity: 1, y: 0 }}
       >
-        <ChevronDown className="h-8 w-8 text-muted-foreground animate-bounce" />
+        <ChevronDown className="h-8 w-8 text-muted-foreground dark:text-gray-400 animate-bounce" />
       </motion.div>
     </section>
   )

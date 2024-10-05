@@ -46,7 +46,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={manrope.variable}>
-      <body className="bg-#f0f0f0 text-foreground">
+      <body className="bg-background text-foreground transition-colors duration-300">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -1,6 +1,6 @@
 import { desc, and, eq, isNull } from 'drizzle-orm';
 import { db } from './drizzle';
-import { activityLogs, teamMembers, teams, users } from './schema';
+import { activityLogs, barkMembers, teams, users } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 
@@ -68,10 +68,10 @@ export async function getUserWithTeam(userId: number) {
   const result = await db
     .select({
       user: users,
-      teamId: teamMembers.teamId,
+      teamId: barkMembers.teamId,
     })
     .from(users)
-    .leftJoin(teamMembers, eq(users.id, teamMembers.userId))
+    .leftJoin(barkMembers, eq(users.id, barkMembers.userId))
     .where(eq(users.id, userId))
     .limit(1);
 
@@ -99,15 +99,15 @@ export async function getActivityLogs() {
     .limit(10);
 }
 
-export async function getTeamForUser(userId: number) {
+export async function getMembershipForUser(userId: number) {
   const result = await db.query.users.findFirst({
     where: eq(users.id, userId),
     with: {
-      teamMembers: {
+      barkMembers: {
         with: {
           team: {
             with: {
-              teamMembers: {
+              barkMembers: {
                 with: {
                   user: {
                     columns: {
@@ -125,5 +125,5 @@ export async function getTeamForUser(userId: number) {
     },
   });
 
-  return result?.teamMembers[0]?.team || null;
+  return result?.barkMembers[0]?.team || null;
 }

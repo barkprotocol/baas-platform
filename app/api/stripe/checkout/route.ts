@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { users, teams, teamMembers } from '@/lib/db/schema';
+import { users, teams, barkMembers } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/payments/stripe';
@@ -66,10 +66,10 @@ export async function GET(request: NextRequest) {
 
     const userTeam = await db
       .select({
-        teamId: teamMembers.teamId,
+        teamId: barkMembers.teamId,
       })
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, user[0].id))
+      .from(barkMembers)
+      .where(eq(barkMembers.userId, user[0].id))
       .limit(1);
 
     if (userTeam.length === 0) {

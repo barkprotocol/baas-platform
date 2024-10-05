@@ -14,7 +14,20 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import Link from 'next/link'
 
-const actions = [
+interface Action {
+  name: string;
+  icon: React.ElementType;
+  description: string;
+}
+
+interface RecentAction {
+  id: number;
+  action: string;
+  status: string;
+  timestamp: string;
+}
+
+const actions: Action[] = [
   { name: 'Transfer SOL', icon: Send, description: 'Send SOL to another wallet' },
   { name: 'Create Token', icon: Coins, description: 'Create a new SPL token' },
   { name: 'Deploy Program', icon: FileText, description: 'Deploy a Solana program' },
@@ -24,9 +37,9 @@ const actions = [
 ]
 
 export default function ActionsPage() {
-  const [selectedAction, setSelectedAction] = useState(actions[0].name)
-  const [isLoading, setIsLoading] = useState(true)
-  const [recentActions, setRecentActions] = useState([])
+  const [selectedAction, setSelectedAction] = useState<string>(actions[0].name)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [recentActions, setRecentActions] = useState<RecentAction[]>([])
   const { toast } = useToast()
 
   useEffect(() => {

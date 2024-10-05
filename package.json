@@ -78,7 +78,7 @@
     "lodash": "^4.17.21",
     "logger": "^0.0.1",
     "lucide-react": "^0.441.0",
-    "next": "15.0.0-canary.152",
+    "next": "14.2.14",
     "next-themes": "^0.3.0",
     "postcss": "^8.4.47",
     "postgres": "^3.4.4",
