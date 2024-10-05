@@ -89,7 +89,7 @@ export function Features() {
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl text-foreground">
             Key Features
           </h2>
-          <p className="mt-4 text-[#D0BFB4] md:text-lg max-w-3xl mx-auto">
+          <p className="mt-4 text-muted-foreground md:text-lg max-w-3xl mx-auto">
             Discover how our platform can revolutionize your blockchain experience with these powerful features.
           </p>
         </motion.div>
@@ -158,14 +158,14 @@ function FeatureCard({ icon, title, description, link, details, isHovered, isExp
             animate={{ rotate: isHovered ? 360 : 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="text-secondary">{icon}</div>
+            <div className="text-[#D0BFB4]">{icon}</div>
           </motion.div>
           <CardTitle className="text-2xl font-bold text-foreground">
             {title}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col justify-between">
-          <p className="text-[#D0BFB4] mb-4">{description}</p>
+          <p className="text-muted-foreground mb-4">{description}</p>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
               <AccordionTrigger
@@ -175,7 +175,7 @@ function FeatureCard({ icon, title, description, link, details, isHovered, isExp
                 Learn More
               </AccordionTrigger>
               <AccordionContent>
-                <p className="text-sm text-[#D0BFB4] mt-2">{details}</p>
+                <p className="text-sm text-muted-foreground mt-2">{details}</p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

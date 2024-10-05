@@ -7,40 +7,46 @@ import { Toaster } from '@/components/ui/toaster';
 import { WalletProviders } from '@/components/providers/wallet-providers'
 import { ThemeProvider } from "@/components/ui/theme-provider"
 
-// Metadata configuration for the application
+const manrope = Manrope({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-manrope',
+});
+
 export const metadata: Metadata = {
   title: 'BARK - Blockchain As A Service',
   description: 'Get started with Solana Actions',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
+  manifest: '/site.webmanifest',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: dark)', color: 'black' },
+  ],
 };
 
-// Viewport configuration
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
 };
-
-// Configure the Manrope font
-const manrope = Manrope({ 
-  subsets: ['latin'],
-  display: 'swap',
-});
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Fetch user data
   const userPromise = getUser();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`bg-background text-foreground ${manrope.className}`}>
+    <html lang="en" suppressHydrationWarning className={manrope.variable}>
+      <body className="bg-#f0f0f0 text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

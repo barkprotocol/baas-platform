@@ -60,11 +60,11 @@ export function Pricing() {
   const formatCurrency = (value: number, currency: 'SOL' | 'USDC' | 'BARK') => {
     switch (currency) {
       case 'SOL':
-        return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')
       case 'USDC':
-        return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')
       case 'BARK':
-        return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+        return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
     }
   }
 
@@ -145,7 +145,7 @@ export function Pricing() {
                   ≈ ${getUSDEquivalent(
                     isYearly ? plan.priceYearly[selectedCurrency] : plan.priceMonthly[selectedCurrency],
                     selectedCurrency
-                  ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                  ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </div>
                 <ul className="space-y-2 mt-4">
                   {plan.features.map((feature, featureIndex) => (

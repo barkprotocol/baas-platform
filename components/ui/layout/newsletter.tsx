@@ -1,8 +1,40 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Mail } from 'lucide-react'
+import { useToast } from "@/components/ui/use-toast"
 
 export function Newsletter() {
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    // Simulating API call
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      toast({
+        title: "Subscribed!",
+        description: "You've successfully subscribed to our newsletter.",
+      })
+      setEmail('')
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "There was a problem subscribing to the newsletter.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <section id="newsletter" className="w-full py-12 md:py-24 lg:py-32">
       <div className="container px-4 md:px-6">
@@ -14,21 +46,28 @@ export function Newsletter() {
             </p>
           </div>
           <div className="w-full max-w-sm space-y-2">
-            <form className="flex space-x-2">
-              <input
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            <form onSubmit={handleSubmit} className="flex space-x-2">
+              <Input
+                className="flex-grow"
                 placeholder="Enter your email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-label="Email for newsletter"
               />
-              <Button type="submit" size="icon">
-                <Mail className="h-4 w-4" />
+              <Button type="submit" size="icon" disabled={isLoading}>
+                {isLoading ? (
+                  <span className="animate-spin">⏳</span>
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
                 <span className="sr-only">Subscribe</span>
               </Button>
             </form>
             <p className="text-xs text-muted-foreground">
               By subscribing, you agree to our{" "}
-              <Link className="underline underline-offset-2 hover:text-primary" href="#">
+              <Link className="underline underline-offset-2 hover:text-primary" href="/privacy-policy">
                 Privacy Policy
               </Link>
             </p>

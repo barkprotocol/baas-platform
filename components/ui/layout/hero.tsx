@@ -51,10 +51,24 @@ export function Hero() {
     visible: { opacity: 1, y: 0 }
   }
 
+  const backgroundImageUrl = "https://www.freepik.com/free-photo/abstract-globe_2052333.htm#fromView=search&page=1&position=30&uuid=2f6a30ba-49c9-4495-8ee7-06ef6a51089b"
+
   return (
-    <section ref={heroRef} className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80 px-4 sm:px-6 lg:px-8">
+    <section 
+      ref={heroRef} 
+      className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+    >
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: `url(${backgroundImageUrl})`,
+          backgroundPosition: 'center 60%',
+          transform: 'scale(1.1)',
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background/95"></div>
       <motion.div 
-        className="container relative z-20 mx-auto"
+        className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8"
         initial="hidden"
         animate="visible"
         variants={titleVariants}
@@ -70,12 +84,12 @@ export function Hero() {
                 Blockchain As A Service Platform
               </span>
             </h1>
-            <p className="mx-auto max-w-[800px] text-gray-600 text-lg sm:text-xl md:text-2xl">
+            <p className="mx-auto max-w-[800px] text-muted-foreground text-lg sm:text-xl md:text-2xl">
               Revolutionize Your World with Solana Blockchain Technology
             </p>
           </motion.div>
           <motion.p 
-            className="text-sm sm:text-base text-[#D0BFB4] max-w-[600px] mb-6"
+            className="text-sm sm:text-base text-muted-foreground max-w-[600px] mb-6"
             variants={childVariants}
           >
             Experience lightning-fast transactions, unparalleled scalability, and enterprise-grade security. Build, deploy, and scale your decentralized applications with ease. Perfect for businesses, developers, and blockchain enthusiasts alike.
@@ -84,7 +98,7 @@ export function Hero() {
             className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
             variants={childVariants}
           >
-            <Link href="/pages/get-started" passHref>
+            <Link href="/pages/blinkboard" passHref>
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 ease-in-out group shadow-lg hover:shadow-xl"
@@ -117,7 +131,7 @@ export function Hero() {
               height={24}
               className="h-6 w-6"
             />
-            <span className="text-sm font-medium text-[#D0BFB4]">Powered by Solana</span>
+            <span className="text-sm font-medium text-muted-foreground">Powered by Solana</span>
           </motion.div>
         </div>
       </motion.div>
@@ -126,7 +140,7 @@ export function Hero() {
         animate={controls}
         initial={{ opacity: 1, y: 0 }}
       >
-        <ChevronDown className="h-8 w-8 text-[#D0BFB4] animate-bounce" />
+        <ChevronDown className="h-8 w-8 text-muted-foreground animate-bounce" />
       </motion.div>
     </section>
   )

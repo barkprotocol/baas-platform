@@ -1,0 +1,205 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Zap, Coins, FileText, Send, Repeat, PlusCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import Link from 'next/link'
+
+const actions = [
+  { name: 'Transfer SOL', icon: Send, description: 'Send SOL to another wallet' },
+  { name: 'Create Token', icon: Coins, description: 'Create a new SPL token' },
+  { name: 'Deploy Program', icon: FileText, description: 'Deploy a Solana program' },
+  { name: 'Swap Tokens', icon: Repeat, description: 'Swap between different tokens' },
+  { name: 'Stake SOL', icon: Zap, description: 'Stake your SOL for rewards' },
+  { name: 'Create NFT', icon: PlusCircle, description: 'Mint a new NFT' },
+]
+
+export default function ActionsPage() {
+  const [selectedAction, setSelectedAction] = useState(actions[0].name)
+  const [isLoading, setIsLoading] = useState(true)
+  const [recentActions, setRecentActions] = useState([])
+  const { toast } = useToast()
+
+  useEffect(() => {
+    // Simulate loading recent actions
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+      setRecentActions([
+        { id: 1, action: 'Transfer SOL', status: 'Completed', timestamp: new Date().toISOString() },
+        { id: 2, action: 'Create Token', status: 'Pending', timestamp: new Date().toISOString() },
+      ])
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleActionSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    toast({
+      title: "Action Submitted",
+      description: `Your ${selectedAction} action has been submitted successfully.`,
+      duration: 5000,
+    })
+    // Add the new action to recent actions
+    setRecentActions(prev => [{
+      id: prev.length + 1,
+      action: selectedAction,
+      status: 'Pending',
+      timestamp: new Date().toISOString()
+    }, ...prev])
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 bg-[#fafafa]">
+      <div className="flex justify-between items-center mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-bold">Solana Actions</h1>
+        </motion.div>
+        <Link href="/" passHref>
+          <Button variant="outline" className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Main
+          </Button>
+        </Link>
+      </div>
+      <p className="text-muted-foreground mb-8">
+        Perform various actions on the Solana blockchain using our simplified interface.
+      </p>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Actions</CardTitle>
+            <CardDescription>Select an action to perform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              {actions.map((action) => (
+                <Button
+                  key={action.name}
+                  variant={selectedAction === action.name ? "default" : "outline"}
+                  className="h-24 flex flex-col items-center justify-center text-center"
+                  onClick={() => setSelectedAction(action.name)}
+                >
+                  <action.icon className="h-6 w-6 mb-2 text-[#D0BFB4]" />
+                  <span className="text-sm">{action.name}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{selectedAction}</CardTitle>
+            <CardDescription>
+              {actions.find(a => a.name === selectedAction)?.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleActionSubmit}>
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="basic">Basic</TabsTrigger>
+                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                </TabsList>
+                <TabsContent value="basic">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="recipient">Recipient Address</Label>
+                      <Input id="recipient" placeholder="Enter recipient's Solana address" />
+                    </div>
+                    <div>
+                      <Label htmlFor="amount">Amount</Label>
+                      <Input id="amount" type="number" placeholder="Enter amount" />
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="advanced">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="data">Additional Data (Optional)</Label>
+                      <Input id="data" placeholder="Enter any additional data" />
+                    </div>
+                    <div>
+                      <Label htmlFor="fee">Custom Fee (Optional)</Label>
+                      <Input id="fee" type="number" placeholder="Enter custom fee" />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" onClick={handleActionSubmit} className="w-full">
+              Execute Action <ArrowRight className="ml-2 h-4 w-4 text-[#D0BFB4]" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      <motion.div 
+        className="mt-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="text-2xl font-semibold mb-4">Recent Actions</h2>
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : recentActions.length > 0 ? (
+          <AnimatePresence>
+            {recentActions.map((action, index) => (
+              <motion.div
+                key={action.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <Card className="mb-4">
+                  <CardContent className="flex items-center justify-between py-4">
+                    <div>
+                      <p className="font-semibold">{action.action}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(action.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                    <Badge variant={action.status === 'Completed' ? 'default' : 'secondary'}>
+                      {action.status}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        ) : (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No recent actions</AlertTitle>
+            <AlertDescription>
+              Your executed actions will appear here once you perform them.
+            </AlertDescription>
+          </Alert>
+        )}
+      </motion.div>
+    </div>
+  )
+}

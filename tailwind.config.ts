@@ -31,7 +31,7 @@ const config: Config = {
           foreground: 'hsl(var(--primary-foreground, 30, 50%, 20%))',
         },
         secondary: {
-          DEFAULT: '#BBA597',
+          DEFAULT: '#010101',
           foreground: 'hsl(var(--secondary-foreground, 30, 50%, 20%))',
         },
         muted: {
@@ -47,7 +47,7 @@ const config: Config = {
           foreground: 'hsl(var(--destructive-foreground, 255, 236%, 230%))',
         },
         border: '#D0BFB4',
-        input: '#D0BFB4',
+        input: '#c7b7aa',
         ring: '#ddd4cb',
         chart: {
           '1': '#D0BFB4',
@@ -72,6 +72,12 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+      minHeight: {
+        screen: ['100vh /* fallback for Opera, IE and etc. */', '100dvh'],
+      },
+      height: {
+        screen: ['100vh /* fallback for Opera, IE and etc. */', '100dvh'],
       },
     },
   },

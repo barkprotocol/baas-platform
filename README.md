@@ -27,6 +27,8 @@ The platform offers a comprehensive API, user-friendly interface, and payment in
 
 ![Basic - Dashboard Features](.github/images/basic-dashboard.png)
 
+![Enterprice - Dashboard Features](.github/images/enterprice-blinkboard.png)
+
 ![About BARK Blinks](.github/images/about-blinks.png)
 
 ![Create new blink](..github/images/create-new-blink.png)

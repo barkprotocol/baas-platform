@@ -15,7 +15,12 @@ export function CTA() {
           <Button asChild size="lg" className="w-full sm:w-auto bg-background dark:bg-primary text-primary dark:text-primary-foreground hover:bg-background/90 dark:hover:bg-primary/90">
             <Link href="/signup">Get Started Now</Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground dark:border-foreground hover:bg-primary-foreground/10 dark:hover:bg-foreground/10">
+          <Button 
+            asChild 
+            size="lg" 
+            variant="outline" 
+            className="w-full sm:w-auto bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10 dark:border-foreground dark:text-foreground dark:hover:bg-foreground/10"
+          >
             <Link href="/contact">Contact Sales</Link>
           </Button>
         </div>
