@@ -5,7 +5,34 @@ All notable changes to the BARK BaaS Platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.3] - 2024-06-15
+
+### Added
+- Implemented donation system for SOL, USDC, and BARK tokens
+- Created API routes for handling donation transactions
+- Added support for Solana Actions API
+- Integrated shadcn/ui components for improved UI consistency
+- Implemented dark mode support across the platform
+- Created legal pages including Terms of Service, Privacy Policy, and Cookie Policy
+- Developed a comprehensive Tokenomics page
+- Added a Footer component with links to legal pages and social media
+- Implemented error boundaries and loading states in the main layout
+- Enhanced security headers in Next.js configuration
+
+### Changed
+- Updated Next.js configuration to use ECMAScript modules (ESM) syntax
+- Improved error handling and logging in API routes
+- Refactored API routes to use Next.js 13+ App Router conventions
+- Updated metadata configuration to comply with latest Next.js standards
+- Improved responsiveness of UI components
+
+### Fixed
+- Resolved CORS issues for Solana Actions API
+- Fixed file structure inconsistencies in legal pages
+- Corrected theme color configuration in metadata
+- Addressed warnings related to deprecated Next.js configuration options
+
+## [0.1.2] - 2024-04-20
 
 ### Added
 - Initial project setup with Next.js framework
@@ -71,5 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple dashboard for viewing blockchain data
 - Preliminary documentation for API usage
 
-[Unreleased]: https://github.com/barkprotocol/baas-platform/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/barkprotocol/baas-platform/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/barkprotocol/baas-platform/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/barkprotocol/baas-platform/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/barkprotocol/baas-platform/releases/tag/v0.1.0
