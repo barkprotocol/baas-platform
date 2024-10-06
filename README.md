@@ -24,6 +24,12 @@ The platform offers a comprehensive API, user-friendly interface, and payment in
 - **Solana login features**: Secure and efficient user authentication using Solana wallets, enabling a seamless login experience for decentralized applications.
 - **Governance**: The BARK Governance DAO (Decentralized Autonomous Organization) is a pivotal part of the BARK Protocol ecosystem, empowering BARK token holders to participate in the governance of the platform.
 
+## Blinkboard Packages
+
+- Basic
+- Pro
+- Enterprice
+
 ### UI/UX Actions & Blinks
 
 ![Basic - Dashboard Features](.github/images/basic-dashboard.png)

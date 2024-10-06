@@ -1,3 +1,8 @@
+// File: app/blinkboard/basic/page.tsx
+// Description: This file contains the basic Blinkboard page component for the BARK BaaS Platform.
+// It displays a dashboard with Blink statistics, activity chart, and a table of Blinks.
+// The component includes filtering, sorting, and search functionality for Blinks.
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -51,7 +56,7 @@ const mockChartData = [
   { name: 'Jun', value: 700 },
 ]
 
-export default function BlinkboardPage() {
+export default function BlinkboardBasicPage() {
   const router = useRouter()
   const { publicKey } = useWallet()
   const { toast } = useToast()
@@ -108,7 +113,7 @@ export default function BlinkboardPage() {
       })
   }, [blinks, filterType, searchTerm, sortBy, sortOrder, activeTab])
 
-  const handleCreateBlink = () => router.push('/blinks/create')
+  const handleCreateBlink = () => router.push('/blinkboard/create')
   const handleBackToMain = () => router.push('/')
 
   const getBlinkTypeIcon = (type: BlinkType) => {
@@ -138,10 +143,13 @@ export default function BlinkboardPage() {
       <div className="flex-1">
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
-              <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
-              Blinkboard
-            </h1>
+            <div className="flex items-center space-x-4">
+              <Image src={titleIconUrl} alt="BARK BLINKS icon" width={40} height={40} />
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold">Blinkboard</h1>
+                <Badge variant="secondary" className="mt-1">Basic</Badge>
+              </div>
+            </div>
             <div className="flex items-center space-x-4">
               <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: iconColor}} />
@@ -283,7 +291,8 @@ export default function BlinkboardPage() {
                   <Button
                     variant="outline"
                     onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                    aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
+                    aria-label={sortOrder === 'asc' ? 'Sort desc
+ending' : 'Sort ascending'}
                   >
                     {sortOrder === 'asc' ? '↑' : '↓'}
                   </Button>

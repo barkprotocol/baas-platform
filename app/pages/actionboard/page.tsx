@@ -108,7 +108,7 @@ export default function ActionsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold">Actionboard</h1>
+          <h1 className="text-3xl font-bold">Action Board</h1>
         </motion.div>
         <div className="flex items-center space-x-4">
           <Button variant="outline" onClick={toggleDarkMode}>
