@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle, Package } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/ui/use-toast"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function GetStarted() {
   const [step, setStep] = useState(1)
@@ -16,7 +17,8 @@ export default function GetStarted() {
     name: '',
     email: '',
     projectType: '',
-    experience: ''
+    experience: '',
+    package: ''
   })
   const { toast } = useToast()
 
@@ -28,9 +30,13 @@ export default function GetStarted() {
     setFormData({ ...formData, [name]: value })
   }
 
+  const handleSelectChange = (value: string) => {
+    setFormData({ ...formData, package: value })
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1)
     } else {
       // Here you would typically send the data to your backend
@@ -47,6 +53,13 @@ export default function GetStarted() {
     { title: 'Personal Info', description: 'Tell us about yourself' },
     { title: 'Project Details', description: 'What are you building?' },
     { title: 'Experience', description: 'Your blockchain experience' },
+    { title: 'Package', description: 'Choose your BaaS package' },
+  ]
+
+  const packages = [
+    { value: 'starter', label: 'Starter', description: 'Basic BaaS features for small projects' },
+    { value: 'pro', label: 'Pro', description: 'Advanced features for growing projects' },
+    { value: 'enterprise', label: 'Enterprise', description: 'Full-scale BaaS solution for large projects' },
   ]
 
   return (
@@ -72,7 +85,7 @@ export default function GetStarted() {
               <motion.div 
                 className="h-full bg-primary rounded-full"
                 initial={{ width: '0%' }}
-                animate={{ width: `${(step / 3) * 100}%` }}
+                animate={{ width: `${(step / 4) * 100}%` }}
                 transition={{ duration: 0.5 }}
               />
             </div>
@@ -132,11 +145,39 @@ export default function GetStarted() {
                 </RadioGroup>
               </div>
             )}
+            {step === 4 && (
+              <div className="space-y-4">
+                <Label>Choose Your Package</Label>
+                <Select value={formData.package} onValueChange={handleSelectChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packages.map((pkg) => (
+                      <SelectItem key={pkg.value} value={pkg.value}>
+                        <div className="flex items-center">
+                          <Package className="mr-2 h-4 w-4" />
+                          <div>
+                            <div className="font-medium">{pkg.label}</div>
+                            <div className="text-sm text-muted-foreground">{pkg.description}</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </form>
         </CardContent>
         <CardFooter>
-          <Button type="submit" onClick={handleSubmit} className="w-full">
-            {step === 3 ? 'Submit' : 'Next'} <ArrowRight className="ml-2 h-4 w-4 text-[#D0BFB4]" />
+          <Button 
+            type="submit" 
+            onClick={handleSubmit} 
+            className="w-full"
+            disabled={step === 4 && !formData.package}
+          >
+            {step === 4 ? 'Submit' : 'Next'} <ArrowRight className="ml-2 h-4 w-4 text-[#D0BFB4]" />
           </Button>
         </CardFooter>
       </Card>
