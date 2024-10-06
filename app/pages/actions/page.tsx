@@ -42,7 +42,7 @@ const actions: Action[] = [
   { name: 'Create Token', icon: Coins, description: 'Create a new SPL token' },
   { name: 'Deploy Program', icon: FileText, description: 'Deploy a Solana program' },
   { name: 'Swap Tokens', icon: Repeat, description: 'Swap between different tokens' },
-  { name: 'Stake', icon: Zap, description: 'Stake your tokens for rewards' },
+  { name: 'Stake', icon: Zap, description: 'Stake your BARK tokens for rewards' },
   { name: 'Create NFT', icon: PlusCircle, description: 'Mint a new NFT' },
 ]
 
@@ -61,12 +61,12 @@ export default function ActionsPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate loading recent actions
+    // Loading recent actions
     const timer = setTimeout(() => {
       setIsLoading(false)
       setRecentActions([
-        { id: 1, action: 'Transfer SOL', status: 'Completed', timestamp: new Date().toISOString() },
-        { id: 2, action: 'Create Token', status: 'Pending', timestamp: new Date().toISOString() },
+        { id: 1, action: 'Transfer Token', status: 'Completed', timestamp: new Date().toISOString() },
+        { id: 2, action: 'Create SPL Token', status: 'Pending', timestamp: new Date().toISOString() },
       ])
     }, 1500)
 
@@ -98,7 +98,7 @@ export default function ActionsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold">Solana Actions</h1>
+          <h1 className="text-3xl font-bold">Actionboard</h1>
         </motion.div>
         <Link href="/" passHref>
           <Button variant="outline" className="flex items-center">
@@ -108,7 +108,7 @@ export default function ActionsPage() {
         </Link>
       </div>
       <p className="text-muted-foreground mb-8">
-        Perform various actions on the Solana blockchain using our simplified interface.
+        Perform various actions on the Solana blockchain using our BARK Protocol interface.
       </p>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -219,7 +219,7 @@ export default function ActionsPage() {
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Simulation mode allows you to test actions without executing them on the blockchain.</p>
+                      <p>Simulation mode allows you to test actions without executing them on the Solana blockchain.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -228,7 +228,7 @@ export default function ActionsPage() {
           </CardContent>
           <CardFooter>
             <Button type="submit" onClick={handleActionSubmit} className="w-full">
-              {isSimulation ? 'Simulate' : 'Execute'} {selectedAction} <ArrowRight className="ml-2 h-4 w-4 text-[#D0BFB4]" />
+              {isSimulation ? 'Simulate' : 'Execute'} {selectedAction} <ArrowRight className="ml-2 h-4 w-4 text-[#010101]" />
             </Button>
           </CardFooter>
         </Card>

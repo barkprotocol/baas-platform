@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowRight, Plus, List, Eye, Zap, BarChart2, ArrowLeft, QrCode, CreditCard, Settings, Send, Share2, DollarSign, Repeat, Shield, Search } from 'lucide-react'
+import { ArrowRight, Plus, List, Eye, Zap, BarChart2, ArrowLeft, QrCode, CreditCard, Settings, Send, Share2, DollarSign, Repeat, Shield, Search, Info } from 'lucide-react'
 import { WalletButton } from "@/components/ui/wallet-button"
 import { CreateSolanaPayQRCode } from "@/components/payments/solana-pay/create-solana-pay-qr-code"
 import { useToast } from "@/components/ui/use-toast"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const iconColor = "#D0BFB4"
 const barkIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
@@ -27,24 +30,27 @@ const cards = [
     description: "Set up a new BARK BLINK for instant transactions.",
     content: "Create a unique Blink link that allows instant payments or interactions on social media platforms using Solana Actions.",
     icon: <Plus className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/create",
+    link: "/create/",
     buttonText: "Create Blink",
+    category: "create",
   },
   {
     title: "Manage Blinks",
     description: "View and edit your existing BARK BLINKS.",
     content: "Access your dashboard to manage all your created Blinks, view statistics, and make updates to your Solana Actions.",
     icon: <List className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/manage",
+    link: "/manage",
     buttonText: "Manage Blinks",
+    category: "manage",
   },
   {
     title: "View Blink Example",
     description: "See how a BARK BLINK works in action.",
     content: "Explore a demo Blink to understand how users will interact with your created Blinks and Solana Actions.",
     icon: <Eye className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/example",
+    link: "/example",
     buttonText: "View Example",
+    category: "learn",
   },
   {
     title: "Blink Analytics",
@@ -53,6 +59,7 @@ const cards = [
     icon: <BarChart2 className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
     link: "/blinks/analytics",
     buttonText: "View Analytics",
+    category: "manage",
   },
   {
     title: "Generate QR Code",
@@ -61,6 +68,7 @@ const cards = [
     icon: <QrCode className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
     link: "/blinks/qr-code",
     buttonText: "Generate QR",
+    category: "share",
   },
   {
     title: "Payment Settings",
@@ -69,6 +77,7 @@ const cards = [
     icon: <CreditCard className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
     link: "/blinks/payment-settings",
     buttonText: "Configure",
+    category: "manage",
   },
   {
     title: "Blink Customization",
@@ -77,6 +86,7 @@ const cards = [
     icon: <Settings className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
     link: "/blinks/customize",
     buttonText: "Customize",
+    category: "create",
   },
   {
     title: "Send Blink",
@@ -85,6 +95,7 @@ const cards = [
     icon: <Send className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
     link: "/blinks/send",
     buttonText: "Send Now",
+    category: "share",
   },
 ]
 
@@ -126,7 +137,7 @@ export default function BlinksPage() {
   const [activeCard, setActiveCard] = useState<number | null>(null)
   const [showQRCode, setShowQRCode] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filteredCards, setFilteredCards] = useState(cards)
+  const [activeTab, setActiveTab] = useState('all')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -145,15 +156,17 @@ export default function BlinksPage() {
   }, [])
 
   const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const term = event.target.value.toLowerCase()
-    setSearchTerm(term)
-    const filtered = cards.filter(card => 
-      card.title.toLowerCase().includes(term) || 
-      card.description.toLowerCase().includes(term) ||
-      card.content.toLowerCase().includes(term)
-    )
-    setFilteredCards(filtered)
+    setSearchTerm(event.target.value.toLowerCase())
   }, [])
+
+  const filteredCards = useMemo(() => {
+    return cards.filter(card => 
+      (activeTab === 'all' || card.category === activeTab) &&
+      (card.title.toLowerCase().includes(searchTerm) || 
+       card.description.toLowerCase().includes(searchTerm) ||
+       card.content.toLowerCase().includes(searchTerm))
+    )
+  }, [activeTab, searchTerm])
 
   const handleCardAction = useCallback((title: string) => {
     toast({
@@ -196,19 +209,30 @@ export default function BlinksPage() {
         Create and manage instant, social media-based blockchain transactions with BARK BLINKS, powered by Solana Actions.
       </motion.p>
 
-      <div className="mb-6">
-        <Label htmlFor="search" className="sr-only">Search Blinks</Label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <Input
-            id="search"
-            type="search"
-            placeholder="Search Blinks..."
-            className="pl-10 pr-4 py-2 w-full"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="w-full sm:w-1/2">
+          <Label htmlFor="search" className="sr-only">Search Blinks</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              id="search"
+              type="search"
+              placeholder="Search Blinks..."
+              className="pl-10 pr-4 py-2 w-full"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
         </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="create">Create</TabsTrigger>
+            <TabsTrigger value="manage">Manage</TabsTrigger>
+            <TabsTrigger value="share">Share</TabsTrigger>
+            <TabsTrigger value="learn">Learn</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
@@ -226,9 +250,14 @@ export default function BlinksPage() {
             >
               <Card className="h-full flex flex-col">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    {card.icon}
-                    {card.title}
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center">
+                      {card.icon}
+                      {card.title}
+                    </span>
+                    <Badge variant="secondary" className="text-white bg-primary">
+                      {card.category}
+                    </Badge>
                   </CardTitle>
                   <CardDescription>{card.description}</CardDescription>
                 </CardHeader>
@@ -306,6 +335,20 @@ export default function BlinksPage() {
           </div>
         </motion.div>
       )}
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" className="fixed bottom-4 right-4">
+              <Info className="h-4 w-4" />
+              <span className="sr-only">Help</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Need help? Contact our support team at support@barkprotocol.com</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }

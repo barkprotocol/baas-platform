@@ -13,11 +13,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { AlertCircle, ArrowLeft, Zap, Plus, Link as LinkIcon, Upload } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Zap, Plus, Link as LinkIcon, Upload, Info } from 'lucide-react'
 import { WalletButton } from "@/components/ui/wallet-button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
+import { Progress } from "@/components/ui/progress"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { tokenIcons, PROGRAM_ID, IDL } from '@/lib/constants'
 
 // Initialize Solana connection (replace with your RPC endpoint)
@@ -42,6 +44,7 @@ export default function CreateBlinkPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isImageUploading, setIsImageUploading] = useState(false)
   const [isBlinkVisible, setIsBlinkVisible] = useState(true)
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,6 +52,25 @@ export default function CreateBlinkPage() {
     }, 500)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setInterval(() => {
+        setProgress((oldProgress) => {
+          if (oldProgress === 100) {
+            clearInterval(timer)
+            return 100
+          }
+          const diff = Math.random() * 10
+          return Math.min(oldProgress + diff, 100)
+        })
+      }, 500)
+
+      return () => {
+        clearInterval(timer)
+      }
+    }
+  }, [isLoading])
 
   const handleBackToBlinks = useCallback(() => router.push('/blinks'), [router])
 
@@ -75,6 +97,7 @@ export default function CreateBlinkPage() {
     }
 
     setIsLoading(true)
+    setProgress(0)
     try {
       // Initialize the BARK Blink program
       const provider = new anchor.AnchorProvider(connection, window.solana, anchor.AnchorProvider.defaultOptions())
@@ -120,6 +143,7 @@ export default function CreateBlinkPage() {
       })
     } finally {
       setIsLoading(false)
+      setProgress(100)
     }
   }, [publicKey, signTransaction, blinkName, description, amount, selectedToken, blinkType, expirationDays, isRecurring, recurringFrequency, router, toast])
 
@@ -307,8 +331,18 @@ export default function CreateBlinkPage() {
                 </Select>
               </div>
             )}
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground flex items-center">
               Creation Fee: {creationFee.toFixed(6)} SOL
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 ml-2 cursor-pointer" style={{ color: iconColor }} />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>The creation fee includes a 0.2% platform fee and Solana network fees.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <Button 
               type="submit" 
@@ -321,6 +355,12 @@ export default function CreateBlinkPage() {
           </form>
         </CardContent>
       </Card>
+
+      {isLoading && (
+        <div className="mt-4">
+          <Progress value={progress} className="w-full" />
+        </div>
+      )}
 
       <Card className="mt-6">
         <CardHeader>

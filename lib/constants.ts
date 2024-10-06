@@ -6,9 +6,7 @@ export const tokenIcons = {
   BARK: "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png",
 }
 
-export const PROGRAM_ID = new PublicKey('BARKkeAwhTuFzcLHX4DjotRsmjXQ1MshGrZbn1CUQq
-
-Mo')
+export const PROGRAM_ID = new PublicKey('BARKkeAwhTuFzcLHX4DjotRsmjXQ1MshGrZbn1CUQqMo')
 
 export const IDL = {
   version: "0.1.0",
