@@ -36,9 +36,9 @@ export function WalletButton() {
   }, [disconnect])
 
   const buttonClasses = cn(
-    "bg-[#D0BFB4] text-white hover:bg-[#C0AFA4] dark:bg-[#D0BFB4] dark:text-gray-900 dark:hover:bg-[#C0AFA4]",
-    "font-semibold px-4 py-2 rounded-md transition-all duration-200 ease-in-out",
-    "transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#D0BFB4] focus:ring-opacity-50"
+    "bg-[#D0BFB4] text-white hover:bg-[#D0BFB4] dark:bg-[#D0BFB4] dark:text-gray-900 dark:hover:bg-[#D0BFB4]",
+    "font-regular px-4 py-2 rounded-md transition-all duration-200 ease-in-out",
+    "transform hover:scale-100 focus:outline-none focus:ring-1 focus:ring-[#D0BFB4] focus:ring-opacity-60"
   )
 
   if (connected && publicKey) {

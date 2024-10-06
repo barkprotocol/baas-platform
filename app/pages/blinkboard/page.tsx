@@ -35,11 +35,11 @@ interface Blink {
 }
 
 const mockBlinks: Blink[] = [
-  { id: '1', name: 'Summer Campaign', type: 'image', amount: 100, status: 'active', createdAt: new Date('2023-06-01') },
-  { id: '2', name: 'Product Launch', type: 'text', amount: 50, status: 'completed', createdAt: new Date('2023-05-15') },
-  { id: '3', name: 'Newsletter Signup', type: 'link', amount: 25, status: 'active', createdAt: new Date('2023-06-10') },
-  { id: '4', name: 'Holiday Special', type: 'image', amount: 75, status: 'expired', createdAt: new Date('2023-04-01') },
-  { id: '5', name: 'Customer Survey', type: 'link', amount: 30, status: 'active', createdAt: new Date('2023-06-05') },
+  { id: '1', name: 'Airdrop Campaign', type: 'image', amount: 100, status: 'active', createdAt: new Date('2024-06-01') },
+  { id: '2', name: 'Product Launch', type: 'text', amount: 50, status: 'completed', createdAt: new Date('2024-05-15') },
+  { id: '3', name: 'Newsletter Signup', type: 'link', amount: 25, status: 'active', createdAt: new Date('2024-06-10') },
+  { id: '4', name: 'BARK NFT membership', type: 'image', amount: 75, status: 'expired', createdAt: new Date('2024-04-01') },
+  { id: '5', name: 'Governance', type: 'link', amount: 30, status: 'active', createdAt: new Date('2024-06-05') },
 ]
 
 const activityData = [
@@ -129,7 +129,7 @@ export default function BlinkboardBasicPage() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <Button onClick={() => router.push('/blinkboard/tiers')} variant="outline" className="flex items-center w-full sm:w-auto">
+              <Button onClick={() => router.push('/tiers')} variant="outline" className="flex items-center w-full sm:w-auto">
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: iconColor}} />
                 Back to Tiers
               </Button>

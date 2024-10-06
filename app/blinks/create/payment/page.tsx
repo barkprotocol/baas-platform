@@ -125,11 +125,13 @@ export default function CreatePaymentBlinkPage() {
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setIsImageUploading(true)
-      // Simulate image upload delay
-      setTimeout(() => {
-        setFormData(prev => ({ ...prev, image: e.target.files![0] }))
+      const file = e.target.files[0]
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, image: file }))
         setIsImageUploading(false)
-      }, 1000)
+      }
+      reader.readAsDataURL(file)
     }
   }, [])
 
@@ -145,7 +147,7 @@ export default function CreatePaymentBlinkPage() {
     }
   }, [formData.name, formData.amount, formData.selectedToken])
 
-  const validateField = (name: string, value: string) => {
+  const validateField = useCallback((name: string, value: string) => {
     let errors = { ...formErrors }
     switch (name) {
       case 'name':
@@ -173,7 +175,7 @@ export default function CreatePaymentBlinkPage() {
         break
     }
     setFormErrors(errors)
-  }
+  }, [formErrors])
 
   const handleCreateBlink = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()

@@ -28,7 +28,7 @@ const config: Config = {
   				foreground: 'hsl(var(--popover-foreground, 30, 50%, 20%))'
   			},
   			primary: {
-  				DEFAULT: '#010101',
+  				DEFAULT: '#D0BFB4',
   				foreground: 'hsl(var(--primary-foreground, 30, 50%, 20%))'
   			},
   			secondary: {
@@ -36,11 +36,11 @@ const config: Config = {
   				foreground: 'hsl(var(--secondary-foreground, 30, 50%, 20%))'
   			},
   			muted: {
-  				DEFAULT: '#D0BFB4',
+  				DEFAULT: '#dccec5',
   				foreground: 'hsl(var(--muted-foreground, 30, 50%, 20%))'
   			},
   			accent: {
-  				DEFAULT: '#dccec5',
+  				DEFAULT: '#cab4a7',
   				foreground: 'hsl(var(--accent-foreground, 30, 50%, 20%))'
   			},
   			destructive: {

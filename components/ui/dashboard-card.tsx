@@ -1,25 +1,38 @@
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LucideIcon } from "lucide-react"
+import { LucideIcon } from 'lucide-react'
 
 interface DashboardCardProps {
   icon: LucideIcon
   title: string
-  description: string
+  value?: string | number
+  description?: string
+  trend?: {
+    value: number
+    label: string
+  }
 }
 
-export function DashboardCard({ icon: Icon, title, description }: DashboardCardProps) {
+export function DashboardCard({ icon: Icon, title, value, description, trend }: DashboardCardProps) {
   return (
-    <Card className="flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-primary/10">
-      <CardHeader className="pb-2 flex flex-col items-center">
-        <div className="w-12 h-12 flex items-center justify-center mb-4 bg-primary/10 rounded-full">
-          <Icon className="w-6 h-6 text-[#E8DFD5]" />
-        </div>
-        <CardTitle className="text-2xl font-bold text-foreground">
-          {title}
-        </CardTitle>
+    <Card className="overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">{description}</p>
+        <div className="text-2xl font-bold">{value}</div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
+        {trend && (
+          <div className="flex items-center space-x-2 mt-2">
+            <span className={`text-xs font-medium ${trend.value >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {trend.value >= 0 ? '+' : ''}{trend.value}%
+            </span>
+            <span className="text-xs text-muted-foreground">{trend.label}</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
