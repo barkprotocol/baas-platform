@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented error boundaries and loading states in the main layout
 - Enhanced security headers in Next.js configuration
 
+### Checkout: Solana Pay
+
+- Added error handling for the case when `process.env.MERCHANT_WALLET` is undefined.
+- Used `Math.round()` when calculating token amounts to ensure we're dealing with whole numbers.
+- Added `lastValidBlockHeight` to the transaction for better validity management.
+- Included the calculated `amount` and `token` in the response JSON for easier tracking and verification.
+- Used `BigInt` for all token amount calculations to prevent precision loss.
+- Improved type safety by explicitly declaring `tokenAmount` as `bigint`.
+- Kept the `OPTIONS` method for CORS support.
+- Ensured all necessary imports are included.
+- Maintained the structure of the original code while improving its robustness and error handling.
+
 ### Changed
 - Updated Next.js configuration to use ECMAScript modules (ESM) syntax
 - Improved error handling and logging in API routes

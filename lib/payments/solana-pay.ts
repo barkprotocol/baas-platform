@@ -1,108 +1,169 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { createTransfer, encodeURL, parseURL, validateTransfer, FindReferenceError, ValidateTransferError } from '@solana/pay';
-import BigNumber from 'bignumber.js';
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { createTransferCheckedInstruction, getAssociatedTokenAddress, getMint } from '@solana/spl-token';
+import { getConnection } from '@/lib/solana/connections';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function createSolanaPayTransaction(
-  recipient: string,
   amount: number,
-  reference: string,
-  label: string,
-  message: string
-): Promise<string> {
-  try {
-    const recipientPublicKey = new PublicKey(recipient);
-    const amountBigNumber = new BigNumber(amount);
+  splToken?: string,
+  label?: string,
+  message?: string
+) {
+  const connection = getConnection();
+  const merchantWallet = new PublicKey(process.env.MERCHANT_WALLET!);
+  const reference = new PublicKey(uuidv4());
 
-    const url = encodeURL({
-      recipient: recipientPublicKey,
-      amount: amountBigNumber,
-      reference: new PublicKey(reference),
-      label,
-      message,
+  let transferInstruction;
+  let tokenAmount: bigint;
+
+  if (splToken) {
+    const mint = new PublicKey(splToken);
+    const mintInfo = await getMint(connection, mint);
+    tokenAmount = BigInt(Math.round(amount * 10 ** mintInfo.decimals));
+    const merchantATA = await getAssociatedTokenAddress(mint, merchantWallet);
+
+    transferInstruction = createTransferCheckedInstruction(
+      merchantATA, // source (to be replaced by the payer's ATA)
+      mint, // mint
+      merchantATA, // destination
+      merchantWallet, // owner
+      tokenAmount,
+      mintInfo.decimals
+    );
+  } else {
+    tokenAmount = BigInt(Math.round(amount * LAMPORTS_PER_SOL));
+    transferInstruction = SystemProgram.transfer({
+      fromPubkey: merchantWallet, // to be replaced by the payer's public key
+      toPubkey: merchantWallet,
+      lamports: tokenAmount,
     });
-
-    return url.toString();
-  } catch (error) {
-    console.error('Error creating Solana Pay transaction:', error);
-    throw new Error('Failed to create Solana Pay transaction');
   }
+
+  const transaction = new Transaction().add(transferInstruction);
+
+  transaction.add(
+    SystemProgram.transfer({
+      fromPubkey: merchantWallet, // to be replaced by the payer's public key
+      toPubkey: reference,
+      lamports: 0,
+    })
+  );
+
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+  transaction.lastValidBlockHeight = lastValidBlockHeight;
+  transaction.feePayer = merchantWallet; // to be replaced by the payer's public key
+
+  const serializedTransaction = transaction.serialize({ requireAllSignatures: false });
+  const base64Transaction = serializedTransaction.toString('base64');
+
+  const solanaPayUrl = `solana:${base64Transaction}?reference=${reference.toBase58()}`;
+
+  return {
+    label: label || 'BARK Payment',
+    icon: 'https://bark-baas-platform.vercel.app/logo.png',
+    message: message || 'Thanks for your payment!',
+    url: solanaPayUrl,
+    reference: reference.toBase58(),
+    amount: tokenAmount.toString(),
+    token: splToken || 'USDC',
+  };
 }
 
-export async function verifySolanaPayTransaction(
-  connection: Connection,
-  reference: string,
-  recipient: string,
-  amount: number
-): Promise<boolean> {
-  try {
-    const referencePublicKey = new PublicKey(reference);
-    const recipientPublicKey = new PublicKey(recipient);
-    const amountBigNumber = new BigNumber(amount);
+export async function verifySolanaPayTransaction(signature: string, reference: string) {
+  const connection = getConnection();
+  const transaction = await connection.getParsedTransaction(signature, 'confirmed');
 
-    const signatureInfo = await findTransactionSignature(connection, referencePublicKey);
-    if (!signatureInfo) {
-      return false;
-    }
-
-    const { signature, slot } = signatureInfo;
-    const response = await connection.getTransaction(signature);
-    if (!response) {
-      return false;
-    }
-
-    if (!validateTransfer(response, {
-      recipient: recipientPublicKey,
-      amount: amountBigNumber,
-      reference: referencePublicKey,
-    })) {
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error verifying Solana Pay transaction:', error);
-    return false;
+  if (!transaction) {
+    throw new Error('Transaction not found');
   }
+
+  const referencePublicKey = new PublicKey(reference);
+  const isReferenceValid = transaction.transaction.message.accountKeys.some(
+    (key) => key.pubkey.equals(referencePublicKey)
+  );
+
+  if (!isReferenceValid) {
+    throw new Error('Invalid reference');
+  }
+
+  const merchantWallet = new PublicKey(process.env.MERCHANT_WALLET!);
+  let isRecipientValid = false;
+
+  for (const instruction of transaction.transaction.message.instructions) {
+    if ('parsed' in instruction) {
+      if (instruction.program === 'system' && instruction.parsed.type === 'transfer') {
+        if (instruction.parsed.info.destination === merchantWallet.toBase58()) {
+          isRecipientValid = true;
+          break;
+        }
+      } else if (instruction.program === 'spl-token' && instruction.parsed.type === 'transferChecked') {
+        if (instruction.parsed.info.destination === merchantWallet.toBase58()) {
+          isRecipientValid = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!isRecipientValid) {
+    throw new Error('Invalid recipient');
+  }
+
+  return true;
 }
 
-async function findTransactionSignature(connection: Connection, reference: PublicKey): Promise<{ signature: string; slot: number } | null> {
-  try {
-    const signatureInfo = await connection.getSignaturesForAddress(reference, { limit: 1 });
+export async function getSolanaPayTransactionStatus(signature: string) {
+  const connection = getConnection();
+  const status = await connection.getSignatureStatus(signature);
 
-    if (signatureInfo.length === 0) {
-      return null;
-    }
-
-    const [{ signature, slot }] = signatureInfo;
-    return { signature, slot };
-  } catch (error) {
-    if (error instanceof FindReferenceError) {
-      return null;
-    }
-    console.error('Error finding transaction signature:', error);
-    throw error;
+  if (status.value === null) {
+    return 'not_found';
   }
+
+  if (status.value.err) {
+    return 'failed';
+  }
+
+  if (status.value.confirmationStatus === 'processed' || status.value.confirmationStatus === 'confirmed') {
+    return 'processing';
+  }
+
+  if (status.value.confirmationStatus === 'finalized') {
+    return 'completed';
+  }
+
+  return 'unknown';
 }
 
-export async function createSolanaPayTransferTransaction(
-  connection: Connection,
-  payer: PublicKey,
-  recipient: PublicKey,
-  amount: BigNumber,
-  reference: PublicKey,
-  memo?: string
-): Promise<Transaction> {
-  try {
-    const tx = await createTransfer(connection, payer, {
-      recipient,
-      amount,
-      reference,
-      memo,
-    });
+export async function getSolanaPayTransactionDetails(signature: string) {
+  const connection = getConnection();
+  const transaction = await connection.getParsedTransaction(signature, 'confirmed');
 
-    return tx;
-  } catch (error) {
-    console.error('Error creating Solana Pay transfer transaction:', error);
-    throw new Error('Failed to create Solana Pay transfer transaction');
+  if (!transaction) {
+    throw new Error('Transaction not found');
   }
+
+  let amount = 0;
+  let token = 'SOL';
+
+  for (const instruction of transaction.transaction.message.instructions) {
+    if ('parsed' in instruction) {
+      if (instruction.program === 'system' && instruction.parsed.type === 'transfer') {
+        amount = instruction.parsed.info.lamports / LAMPORTS_PER_SOL;
+      } else if (instruction.program === 'spl-token' && instruction.parsed.type === 'transferChecked') {
+        amount = Number(instruction.parsed.info.tokenAmount.amount) / (10 ** instruction.parsed.info.tokenAmount.decimals);
+        token = instruction.parsed.info.mint;
+      }
+    }
+  }
+
+  return {
+    signature,
+    timestamp: transaction.blockTime ? new Date(transaction.blockTime * 1000).toISOString() : null,
+    amount,
+    token,
+    from: transaction.transaction.message.accountKeys[0].pubkey.toBase58(),
+    to: transaction.transaction.message.accountKeys[1].pubkey.toBase58(),
+  };
 }
