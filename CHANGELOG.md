@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.3] - 2024-06-15
 
 ### Added
-- Implemented donation system for SOL, USDC, and BARK tokens
+- Implemented Solana actions and donation system for SOL, USDC, and BARK tokens
 - Created API routes for handling donation transactions
 - Added support for Solana Actions API
+- Added Metaplax packages
 - Integrated shadcn/ui components for improved UI consistency
 - Implemented dark mode support across the platform
 - Created legal pages including Terms of Service, Privacy Policy, and Cookie Policy
+- Comprehensive Solana utility functions in `lib/solana/solana.ts`
+- Flexible Solana network connection management in `lib/solana/connections.ts`
+- SPL token utilities and management in `lib/solana/tokens.ts`
 - Developed a comprehensive Tokenomics page
 - Added a Footer component with links to legal pages and social media
 - Implemented error boundaries and loading states in the main layout
@@ -56,9 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting and DDoS protection for API endpoints
 - Solana program (smart contract) versioning and upgrade system
 - Integration with popular blockchain explorers for transaction verification
-- Comprehensive Solana utility functions in `lib/solana.ts`
-- Flexible Solana network connection management in `lib/connections.ts`
-- SPL token utilities and management in `lib/tokens.ts`
+- Added icons BARK, SOL, USDC
 - Support for multiple wallet providers
 - Automated daily backups of user data and transaction history
 - Integration with decentralized identity (DID) solutions
@@ -68,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated README with comprehensive project information
 - Improved error handling in API routes
+- Changed Typescript to next.config.mjs
 - Enhanced wallet connection process for better user experience
 - Optimized database queries for improved performance
 - Upgraded Solana SDK to latest version for improved compatibility
@@ -79,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Resolved issues with wallet connection persistence
+- Resolved and fix issues with next.config.mjs
 - Fixed styling inconsistencies in the dashboard
 - Addressed potential security vulnerabilities in API authentication
 - Corrected calculation errors in transaction fee estimation

@@ -1,72 +1,64 @@
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, createTransferInstruction } from '@solana/spl-token';
-import { WalletContextState } from '@solana/wallet-adapter-react';
+import { getConnection } from './connections';
 
-export async function getBalance(connection: Connection, publicKey: PublicKey): Promise<number> {
-  try {
-    const balance = await connection.getBalance(publicKey);
-    return balance / LAMPORTS_PER_SOL;
-  } catch (error) {
-    console.error('Error fetching balance:', error);
-    throw error;
-  }
+export async function getBalance(publicKey: PublicKey): Promise<number> {
+  const connection = getConnection();
+  const balance = await connection.getBalance(publicKey);
+  return balance / LAMPORTS_PER_SOL;
 }
 
 export async function transferSOL(
-  connection: Connection,
-  wallet: WalletContextState,
-  recipient: PublicKey,
+  from: PublicKey,
+  to: PublicKey,
   amount: number
 ): Promise<string> {
+  const connection = getConnection();
+  const transaction = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: from,
+      toPubkey: to,
+      lamports: amount * LAMPORTS_PER_SOL,
+    })
+  );
+
+  const { blockhash } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = from;
+
+  // Note: This function doesn't sign the transaction. The wallet should sign it.
+  return transaction.serialize().toString('base64');
+}
+
+export async function getAccountInfo(publicKey: PublicKey): Promise<any> {
+  const connection = getConnection();
+  const accountInfo = await connection.getAccountInfo(publicKey);
+  return accountInfo;
+}
+
+export async function getTransactionHistory(publicKey: PublicKey, limit: number = 10): Promise<any[]> {
+  const connection = getConnection();
+  const signatures = await connection.getSignaturesForAddress(publicKey, { limit });
+  const transactions = await Promise.all(
+    signatures.map(sig => connection.getTransaction(sig.signature))
+  );
+  return transactions.filter(tx => tx !== null);
+}
+
+export function isValidPublicKey(address: string): boolean {
   try {
-    if (!wallet.publicKey) throw new Error('Wallet not connected');
-
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: recipient,
-        lamports: amount * LAMPORTS_PER_SOL,
-      })
-    );
-
-    const signature = await wallet.sendTransaction(transaction, connection);
-    await connection.confirmTransaction(signature, 'confirmed');
-    return signature;
-  } catch (error) {
-    console.error('Error transferring SOL:', error);
-    throw error;
+    new PublicKey(address);
+    return true;
+  } catch {
+    return false;
   }
 }
 
-export async function transferSPLToken(
-  connection: Connection,
-  wallet: WalletContextState,
-  tokenMintAddress: PublicKey,
-  recipientTokenAccount: PublicKey,
-  amount: number
-): Promise<string> {
-  try {
-    if (!wallet.publicKey) throw new Error('Wallet not connected');
+export async function getBlockTime(slot: number): Promise<number | null> {
+  const connection = getConnection();
+  return await connection.getBlockTime(slot);
+}
 
-    const sourceTokenAccount = await connection.getTokenAccountsByOwner(wallet.publicKey, { mint: tokenMintAddress });
-    if (sourceTokenAccount.value.length === 0) throw new Error('Source token account not found');
-
-    const transaction = new Transaction().add(
-      createTransferInstruction(
-        sourceTokenAccount.value[0].pubkey,
-        recipientTokenAccount,
-        wallet.publicKey,
-        amount,
-        [],
-        TOKEN_PROGRAM_ID
-      )
-    );
-
-    const signature = await wallet.sendTransaction(transaction, connection);
-    await connection.confirmTransaction(signature, 'confirmed');
-    return signature;
-  } catch (error) {
-    console.error('Error transferring SPL token:', error);
-    throw error;
-  }
+export async function getSlot(): Promise<number> {
+  const connection = getConnection();
+  return await connection.getSlot();
 }
