@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, Zap, Coins, FileText, Send, Repeat, PlusCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { ArrowRight, Zap, Coins, FileText, Send, Repeat, PlusCircle, AlertCircle, ArrowLeft, Info } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,11 @@ import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Action {
   name: string;
@@ -27,19 +31,33 @@ interface RecentAction {
   timestamp: string;
 }
 
+interface Currency {
+  name: string;
+  symbol: string;
+  icon: string;
+}
+
 const actions: Action[] = [
-  { name: 'Transfer SOL', icon: Send, description: 'Send SOL to another wallet' },
+  { name: 'Transfer', icon: Send, description: 'Send tokens to another wallet' },
   { name: 'Create Token', icon: Coins, description: 'Create a new SPL token' },
   { name: 'Deploy Program', icon: FileText, description: 'Deploy a Solana program' },
   { name: 'Swap Tokens', icon: Repeat, description: 'Swap between different tokens' },
-  { name: 'Stake SOL', icon: Zap, description: 'Stake your SOL for rewards' },
+  { name: 'Stake', icon: Zap, description: 'Stake your tokens for rewards' },
   { name: 'Create NFT', icon: PlusCircle, description: 'Mint a new NFT' },
+]
+
+const currencies: Currency[] = [
+  { name: 'Solana', symbol: 'SOL', icon: 'https://ucarecdn.com/8bcc4664-01b2-4a88-85bc-9ebce234f08b/sol.png' },
+  { name: 'USD Coin', symbol: 'USDC', icon: 'https://ucarecdn.com/67e17a97-f3bd-46c0-8627-e13b8b939d26/usdc.png' },
+  { name: 'BARK', symbol: 'BARK', icon: 'https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png' },
 ]
 
 export default function ActionsPage() {
   const [selectedAction, setSelectedAction] = useState<string>(actions[0].name)
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(currencies[0])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [recentActions, setRecentActions] = useState<RecentAction[]>([])
+  const [isSimulation, setIsSimulation] = useState<boolean>(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -57,16 +75,17 @@ export default function ActionsPage() {
 
   const handleActionSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const actionMessage = isSimulation ? "simulated" : "submitted"
     toast({
-      title: "Action Submitted",
-      description: `Your ${selectedAction} action has been submitted successfully.`,
+      title: `Action ${actionMessage}`,
+      description: `Your ${selectedAction} ${selectedCurrency.symbol} action has been ${actionMessage} successfully.`,
       duration: 5000,
     })
     // Add the new action to recent actions
     setRecentActions(prev => [{
       id: prev.length + 1,
-      action: selectedAction,
-      status: 'Pending',
+      action: `${selectedAction} ${selectedCurrency.symbol}`,
+      status: isSimulation ? 'Simulated' : 'Pending',
       timestamp: new Date().toISOString()
     }, ...prev])
   }
@@ -117,14 +136,51 @@ export default function ActionsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{selectedAction}</CardTitle>
+            <CardTitle>{selectedAction} {selectedCurrency.symbol}</CardTitle>
             <CardDescription>
               {actions.find(a => a.name === selectedAction)?.description}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleActionSubmit}>
-              <Tabs defaultValue="basic" className="w-full">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="currency">Select Currency</Label>
+                  <Select
+                    value={selectedCurrency.symbol}
+                    onValueChange={(value) => setSelectedCurrency(currencies.find(c => c.symbol === value) || currencies[0])}
+                  >
+                    <SelectTrigger id="currency" className="w-full">
+                      <SelectValue placeholder="Select a currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map((currency) => (
+                        <SelectItem key={currency.symbol} value={currency.symbol}>
+                          <div className="flex items-center">
+                            <Image
+                              src={currency.icon}
+                              alt={currency.name}
+                              width={24}
+                              height={24}
+                              className="mr-2"
+                            />
+                            {currency.name} ({currency.symbol})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="recipient">Recipient Address</Label>
+                  <Input id="recipient" placeholder={`Enter recipient's ${selectedCurrency.name} address`} />
+                </div>
+                <div>
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input id="amount" type="number" placeholder={`Enter amount in ${selectedCurrency.symbol}`} />
+                </div>
+              </div>
+              <Tabs defaultValue="basic" className="w-full mt-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="basic">Basic</TabsTrigger>
                   <TabsTrigger value="advanced">Advanced</TabsTrigger>
@@ -132,12 +188,8 @@ export default function ActionsPage() {
                 <TabsContent value="basic">
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="recipient">Recipient Address</Label>
-                      <Input id="recipient" placeholder="Enter recipient's Solana address" />
-                    </div>
-                    <div>
-                      <Label htmlFor="amount">Amount</Label>
-                      <Input id="amount" type="number" placeholder="Enter amount" />
+                      <Label htmlFor="memo">Memo (Optional)</Label>
+                      <Input id="memo" placeholder="Enter a memo for this transaction" />
                     </div>
                   </div>
                 </TabsContent>
@@ -154,11 +206,29 @@ export default function ActionsPage() {
                   </div>
                 </TabsContent>
               </Tabs>
+              <div className="flex items-center space-x-2 mt-4">
+                <Switch
+                  id="simulation-mode"
+                  checked={isSimulation}
+                  onCheckedChange={setIsSimulation}
+                />
+                <Label htmlFor="simulation-mode">Simulation Mode</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Simulation mode allows you to test actions without executing them on the blockchain.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </form>
           </CardContent>
           <CardFooter>
             <Button type="submit" onClick={handleActionSubmit} className="w-full">
-              Execute Action <ArrowRight className="ml-2 h-4 w-4 text-[#D0BFB4]" />
+              {isSimulation ? 'Simulate' : 'Execute'} {selectedAction} <ArrowRight className="ml-2 h-4 w-4 text-[#D0BFB4]" />
             </Button>
           </CardFooter>
         </Card>
@@ -195,7 +265,13 @@ export default function ActionsPage() {
                         {new Date(action.timestamp).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant={action.status === 'Completed' ? 'default' : 'secondary'}>
+                    <Badge 
+                      variant={
+                        action.status === 'Completed' ? 'default' : 
+                        action.status === 'Simulated' ? 'secondary' : 
+                        'outline'
+                      }
+                    >
                       {action.status}
                     </Badge>
                   </CardContent>
