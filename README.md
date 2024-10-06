@@ -19,6 +19,7 @@ The platform offers a comprehensive API, user-friendly interface, and payment in
 - **NFT Minting**: Easy creation and management of compressed NFTs (CNFT) on the Solana blockchain.
 - **NFT Marketplace**: A dedicated marketplace for users to trade and manage their NFTs.
 - **Social Finance**: Tools for community engagement, fundraising, and collaborative financial projects.
+- **Web3 Payments**: Solana Pay and QR-code payments integrations
 - **Wallet Management**: Simplified wallet connections for users with support for popular Solana wallets.
 - **Solana login features**: Secure and efficient user authentication using Solana wallets, enabling a seamless login experience for decentralized applications.
 - **Governance**: The BARK Governance DAO (Decentralized Autonomous Organization) is a pivotal part of the BARK Protocol ecosystem, empowering BARK token holders to participate in the governance of the platform.
@@ -91,6 +92,10 @@ The BARK Protocol is built on a modern technology stack designed for scalability
    ```bash
    npm run dev
    ```
+
+## To-Do List
+
+- Update / refactor, implemenet to Prisma / Supabase DB and schema
 
 ## Example Blinks pages
 

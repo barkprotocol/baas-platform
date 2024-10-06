@@ -95,6 +95,7 @@
     "postgres": "^3.4.4",
     "prettier": "^3.3.3",
     "qrcode": "^1.5.4",
+    "qrcode.react": "^4.0.1",
     "react": "19.0.0-rc-7771d3a7-20240827",
     "react-day-picker": "8.10.1",
     "react-dom": "19.0.0-rc-7771d3a7-20240827",

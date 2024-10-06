@@ -1,13 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, Plus, List, Eye, Zap, BarChart2, ArrowLeft } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ArrowRight, Plus, List, Eye, Zap, BarChart2, ArrowLeft, QrCode, CreditCard, Settings, Send, Share2, DollarSign, Repeat, Shield, Search } from 'lucide-react'
 import { WalletButton } from "@/components/ui/wallet-button"
+import { CreateSolanaPayQRCode } from "@/components/payments/solana-pay/create-solana-pay-qr-code"
+import { useToast } from "@/components/ui/use-toast"
 
 const iconColor = "#D0BFB4"
 const barkIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
@@ -50,38 +54,80 @@ const cards = [
     link: "/blinks/analytics",
     buttonText: "View Analytics",
   },
+  {
+    title: "Generate QR Code",
+    description: "Create a QR code for easy Blink sharing.",
+    content: "Generate a custom QR code for your Blink to facilitate easy scanning and instant transactions.",
+    icon: <QrCode className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
+    link: "/blinks/qr-code",
+    buttonText: "Generate QR",
+  },
+  {
+    title: "Payment Settings",
+    description: "Configure your payment preferences.",
+    content: "Set up and manage your payment options, including supported tokens and transaction limits.",
+    icon: <CreditCard className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
+    link: "/blinks/payment-settings",
+    buttonText: "Configure",
+  },
+  {
+    title: "Blink Customization",
+    description: "Personalize your Blink appearance and behavior.",
+    content: "Customize the look and feel of your Blinks, including themes, logos, and interaction flows.",
+    icon: <Settings className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
+    link: "/blinks/customize",
+    buttonText: "Customize",
+  },
+  {
+    title: "Send Blink",
+    description: "Instantly send a Blink to a recipient.",
+    content: "Quickly send a Blink to another user or platform, facilitating instant transactions or interactions.",
+    icon: <Send className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
+    link: "/blinks/send",
+    buttonText: "Send Now",
+  },
 ]
 
 const whyUseBlinks = [
   {
     title: "Lightning-Fast Transactions",
     description: "Experience near-instantaneous transactions with Solana's high-speed network, enabling real-time payments and interactions.",
+    icon: <Zap className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
   },
   {
     title: "Minimal Fees",
     description: "Benefit from Solana's low transaction costs, making micro-transactions and frequent use economically viable.",
+    icon: <DollarSign className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
   },
   {
     title: "Social Media Integration",
     description: "Seamlessly integrate BARK BLINKS into popular social media platforms, enabling easy sharing and viral growth.",
+    icon: <Share2 className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
   },
   {
     title: "Versatile Use Cases",
     description: "From simple payments to complex smart contract interactions, BARK BLINKS adapt to various scenarios including tipping, subscriptions, and more.",
+    icon: <Repeat className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
   },
   {
     title: "Enhanced Security",
     description: "Leverage Solana's robust blockchain technology for secure, transparent, and tamper-proof transactions.",
+    icon: <Shield className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
   },
   {
     title: "User-Friendly Experience",
     description: "Enjoy a smooth, intuitive interface that makes blockchain interactions accessible to both crypto novices and experts.",
+    icon: <Eye className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
   },
 ]
 
 export default function BlinksPage() {
   const [isBlinkVisible, setIsBlinkVisible] = useState(true)
   const [activeCard, setActiveCard] = useState<number | null>(null)
+  const [showQRCode, setShowQRCode] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filteredCards, setFilteredCards] = useState(cards)
+  const { toast } = useToast()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -89,6 +135,32 @@ export default function BlinksPage() {
     }, 500)
     return () => clearInterval(interval)
   }, [])
+
+  const handleGenerateQR = useCallback(() => {
+    setShowQRCode(true)
+  }, [])
+
+  const handleCloseQR = useCallback(() => {
+    setShowQRCode(false)
+  }, [])
+
+  const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const term = event.target.value.toLowerCase()
+    setSearchTerm(term)
+    const filtered = cards.filter(card => 
+      card.title.toLowerCase().includes(term) || 
+      card.description.toLowerCase().includes(term) ||
+      card.content.toLowerCase().includes(term)
+    )
+    setFilteredCards(filtered)
+  }, [])
+
+  const handleCardAction = useCallback((title: string) => {
+    toast({
+      title: `Action: ${title}`,
+      description: "This feature is coming soon!",
+    })
+  }, [toast])
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -124,9 +196,24 @@ export default function BlinksPage() {
         Create and manage instant, social media-based blockchain transactions with BARK BLINKS, powered by Solana Actions.
       </motion.p>
 
+      <div className="mb-6">
+        <Label htmlFor="search" className="sr-only">Search Blinks</Label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            id="search"
+            type="search"
+            placeholder="Search Blinks..."
+            className="pl-10 pr-4 py-2 w-full"
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
         <AnimatePresence>
-          {cards.map((card, index) => (
+          {filteredCards.map((card, index) => (
             <motion.div
               key={index}
               variants={cardVariants}
@@ -149,11 +236,9 @@ export default function BlinksPage() {
                   <p>{card.content}</p>
                 </CardContent>
                 <CardFooter>
-                  <Button asChild className="w-full">
-                    <Link href={card.link}>
-                      {card.buttonText}
-                      <ArrowRight className="ml-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
-                    </Link>
+                  <Button className="w-full" onClick={() => handleCardAction(card.title)}>
+                    {card.buttonText}
+                    <ArrowRight className="ml-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
                   </Button>
                 </CardFooter>
               </Card>
@@ -180,7 +265,7 @@ export default function BlinksPage() {
               <Card className="h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Zap className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />
+                    {item.icon}
                     {item.title}
                   </CardTitle>
                 </CardHeader>
@@ -206,6 +291,21 @@ export default function BlinksPage() {
           </Link>
         </Button>
       </motion.div>
+
+      {showQRCode && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Generate QR Code</h2>
+            <CreateSolanaPayQRCode />
+            <Button onClick={handleCloseQR} className="mt-4 w-full">Close</Button>
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }
