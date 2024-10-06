@@ -1,354 +1,229 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ArrowRight, Plus, List, Eye, Zap, BarChart2, ArrowLeft, QrCode, CreditCard, Settings, Send, Share2, DollarSign, Repeat, Shield, Search, Info } from 'lucide-react'
-import { WalletButton } from "@/components/ui/wallet-button"
-import { CreateSolanaPayQRCode } from "@/components/payments/solana-pay/create-solana-pay-qr-code"
-import { useToast } from "@/components/ui/use-toast"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useToast } from "@/components/ui/use-toast"
+import { AlertCircle, Plus, Search, CreditCard, Gift, Image as ImageIcon } from 'lucide-react'
+import { WalletButton } from "@/components/ui/wallet-button"
 
+const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
 const iconColor = "#D0BFB4"
-const barkIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
+type BlinkType = 'payment' | 'gift' | 'nft'
+
+interface Blink {
+  id: string
+  name: string
+  type: BlinkType
+  amount: number
+  currency: string
+  status: 'active' | 'expired' | 'completed'
+  createdAt: string
 }
 
-const cards = [
-  {
-    title: "Create a Blink",
-    description: "Set up a new BARK BLINK for instant transactions.",
-    content: "Create a unique Blink link that allows instant payments or interactions on social media platforms using Solana Actions.",
-    icon: <Plus className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/create/",
-    buttonText: "Create Blink",
-    category: "create",
-  },
-  {
-    title: "Manage Blinks",
-    description: "View and edit your existing BARK BLINKS.",
-    content: "Access your dashboard to manage all your created Blinks, view statistics, and make updates to your Solana Actions.",
-    icon: <List className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/manage",
-    buttonText: "Manage Blinks",
-    category: "manage",
-  },
-  {
-    title: "View Blink Example",
-    description: "See how a BARK BLINK works in action.",
-    content: "Explore a demo Blink to understand how users will interact with your created Blinks and Solana Actions.",
-    icon: <Eye className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/example",
-    buttonText: "View Example",
-    category: "learn",
-  },
-  {
-    title: "Blink Analytics",
-    description: "Track the performance of your BARK BLINKS.",
-    content: "Get detailed insights into your Blinks' usage, engagement rates, and transaction volumes to optimize your strategies.",
-    icon: <BarChart2 className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/analytics",
-    buttonText: "View Analytics",
-    category: "manage",
-  },
-  {
-    title: "Generate QR Code",
-    description: "Create a QR code for easy Blink sharing.",
-    content: "Generate a custom QR code for your Blink to facilitate easy scanning and instant transactions.",
-    icon: <QrCode className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/qr-code",
-    buttonText: "Generate QR",
-    category: "share",
-  },
-  {
-    title: "Payment Settings",
-    description: "Configure your payment preferences.",
-    content: "Set up and manage your payment options, including supported tokens and transaction limits.",
-    icon: <CreditCard className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/payment-settings",
-    buttonText: "Configure",
-    category: "manage",
-  },
-  {
-    title: "Blink Customization",
-    description: "Personalize your Blink appearance and behavior.",
-    content: "Customize the look and feel of your Blinks, including themes, logos, and interaction flows.",
-    icon: <Settings className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/customize",
-    buttonText: "Customize",
-    category: "create",
-  },
-  {
-    title: "Send Blink",
-    description: "Instantly send a Blink to a recipient.",
-    content: "Quickly send a Blink to another user or platform, facilitating instant transactions or interactions.",
-    icon: <Send className="h-6 w-6 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-    link: "/blinks/send",
-    buttonText: "Send Now",
-    category: "share",
-  },
-]
-
-const whyUseBlinks = [
-  {
-    title: "Lightning-Fast Transactions",
-    description: "Experience near-instantaneous transactions with Solana's high-speed network, enabling real-time payments and interactions.",
-    icon: <Zap className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-  },
-  {
-    title: "Minimal Fees",
-    description: "Benefit from Solana's low transaction costs, making micro-transactions and frequent use economically viable.",
-    icon: <DollarSign className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-  },
-  {
-    title: "Social Media Integration",
-    description: "Seamlessly integrate BARK BLINKS into popular social media platforms, enabling easy sharing and viral growth.",
-    icon: <Share2 className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-  },
-  {
-    title: "Versatile Use Cases",
-    description: "From simple payments to complex smart contract interactions, BARK BLINKS adapt to various scenarios including tipping, subscriptions, and more.",
-    icon: <Repeat className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-  },
-  {
-    title: "Enhanced Security",
-    description: "Leverage Solana's robust blockchain technology for secure, transparent, and tamper-proof transactions.",
-    icon: <Shield className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-  },
-  {
-    title: "User-Friendly Experience",
-    description: "Enjoy a smooth, intuitive interface that makes blockchain interactions accessible to both crypto novices and experts.",
-    icon: <Eye className="h-5 w-5 mr-2" style={{ color: iconColor }} aria-hidden="true" />,
-  },
+const mockBlinks: Blink[] = [
+  { id: '1', name: 'Coffee Payment', type: 'payment', amount: 5, currency: 'SOL', status: 'active', createdAt: '2023-06-01' },
+  { id: '2', name: 'Birthday Gift', type: 'gift', amount: 50, currency: 'USDC', status: 'completed', createdAt: '2023-05-15' },
+  { id: '3', name: 'Art Collection', type: 'nft', amount: 1, currency: 'SOL', status: 'active', createdAt: '2023-06-10' },
+  { id: '4', name: 'Rent Payment', type: 'payment', amount: 1000, currency: 'USDC', status: 'active', createdAt: '2023-06-05' },
+  { id: '5', name: 'Graduation Gift', type: 'gift', amount: 100, currency: 'SOL', status: 'expired', createdAt: '2023-04-20' },
 ]
 
 export default function BlinksPage() {
-  const [isBlinkVisible, setIsBlinkVisible] = useState(true)
-  const [activeCard, setActiveCard] = useState<number | null>(null)
-  const [showQRCode, setShowQRCode] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState('all')
+  const router = useRouter()
+  const { publicKey } = useWallet()
   const { toast } = useToast()
+  const [blinks, setBlinks] = useState<Blink[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterType, setFilterType] = useState<BlinkType | 'all'>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'amount' | 'createdAt'>('createdAt')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsBlinkVisible(v => !v)
-    }, 500)
-    return () => clearInterval(interval)
-  }, [])
+    const fetchBlinks = async () => {
+      setIsLoading(true)
+      try {
+        // In a real application, you would fetch data from an API here
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulating API delay
+        setBlinks(mockBlinks)
+      } catch (error) {
+        console.error('Error fetching blinks:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load blinks. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const handleGenerateQR = useCallback(() => {
-    setShowQRCode(true)
-  }, [])
-
-  const handleCloseQR = useCallback(() => {
-    setShowQRCode(false)
-  }, [])
-
-  const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value.toLowerCase())
-  }, [])
-
-  const filteredCards = useMemo(() => {
-    return cards.filter(card => 
-      (activeTab === 'all' || card.category === activeTab) &&
-      (card.title.toLowerCase().includes(searchTerm) || 
-       card.description.toLowerCase().includes(searchTerm) ||
-       card.content.toLowerCase().includes(searchTerm))
-    )
-  }, [activeTab, searchTerm])
-
-  const handleCardAction = useCallback((title: string) => {
-    toast({
-      title: `Action: ${title}`,
-      description: "This feature is coming soon!",
-    })
+    fetchBlinks()
   }, [toast])
+
+  const filteredAndSortedBlinks = useMemo(() => {
+    return blinks
+      .filter(blink => 
+        (filterType === 'all' || blink.type === filterType) &&
+        (blink.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         blink.id.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      .sort((a, b) => {
+        if (sortBy === 'amount') {
+          return sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount
+        } else if (sortBy === 'createdAt') {
+          return sortOrder === 'asc' 
+            ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        } else {
+          return sortOrder === 'asc' 
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name)
+        }
+      })
+  }, [blinks, filterType, searchTerm, sortBy, sortOrder])
+
+  const handleCreateBlink = () => router.push('/blinks/create')
+
+  const getBlinkTypeIcon = (type: BlinkType) => {
+    switch (type) {
+      case 'payment':
+        return <CreditCard className="h-4 w-4" style={{ color: iconColor }} />
+      case 'gift':
+        return <Gift className="h-4 w-4" style={{ color: iconColor }} />
+      case 'nft':
+        return <ImageIcon className="h-4 w-4" style={{ color: iconColor }} />
+    }
+  }
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-8">
-        <motion.div 
-          className="flex items-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Image src={barkIconUrl} alt="BARK BLINKS icon" width={50} height={50} className="mr-4" />
-          <h1 className="text-4xl font-bold">
-            BARK <span className={`font-light ${isBlinkVisible ? 'opacity-100' : 'opacity-30'} transition-opacity duration-300`}>BLINKS</span>
-          </h1>
-        </motion.div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
+          <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
+          Your BLINKs
+        </h1>
         <div className="flex items-center space-x-4">
           <WalletButton />
-          <Button asChild variant="outline" className="flex items-center">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
-              Back to Main
-            </Link>
+          <Button onClick={handleCreateBlink} disabled={!publicKey}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Blink
           </Button>
         </div>
       </div>
 
-      <motion.p 
-        className="text-xl mb-8 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
-        Create and manage instant, social media-based blockchain transactions with BARK BLINKS, powered by Solana Actions.
-      </motion.p>
-
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
-        <div className="w-full sm:w-1/2">
-          <Label htmlFor="search" className="sr-only">Search Blinks</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              id="search"
-              type="search"
-              placeholder="Search Blinks..."
-              className="pl-10 pr-4 py-2 w-full"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-        </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="create">Create</TabsTrigger>
-            <TabsTrigger value="manage">Manage</TabsTrigger>
-            <TabsTrigger value="share">Share</TabsTrigger>
-            <TabsTrigger value="learn">Learn</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-        <AnimatePresence>
-          {filteredCards.map((card, index) => (
-            <motion.div
-              key={index}
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              transition={{ delay: index * 0.1 }}
-              onHoverStart={() => setActiveCard(index)}
-              onHoverEnd={() => setActiveCard(null)}
-            >
-              <Card className="h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      {card.icon}
-                      {card.title}
-                    </span>
-                    <Badge variant="secondary" className="text-white bg-primary">
-                      {card.category}
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p>{card.content}</p>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => handleCardAction(card.title)}>
-                    {card.buttonText}
-                    <ArrowRight className="ml-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      <motion.div 
-        className="mt-16"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-      >
-        <h2 className="text-3xl font-bold mb-8 text-center">Why Use BARK BLINKS?</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {whyUseBlinks.map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 + index * 0.1 }}
-            >
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    {item.icon}
-                    {item.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{item.description}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      <motion.div 
-        className="mt-12 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.5 }}
-      >
-        <Button asChild size="lg">
-          <Link href="/docs/blinks">
-            Learn More About BARK BLINKS
-            <ArrowRight className="ml-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
-          </Link>
-        </Button>
-      </motion.div>
-
-      {showQRCode && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-        >
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Generate QR Code</h2>
-            <CreateSolanaPayQRCode />
-            <Button onClick={handleCloseQR} className="mt-4 w-full">Close</Button>
-          </div>
-        </motion.div>
+      {!publicKey && (
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" style={{ color: iconColor }} />
+          <AlertTitle>Wallet not connected</AlertTitle>
+          <AlertDescription>
+            Please connect your wallet to view and manage your Blinks.
+          </AlertDescription>
+        </Alert>
       )}
 
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="fixed bottom-4 right-4">
-              <Info className="h-4 w-4" />
-              <span className="sr-only">Help</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Need help? Contact our support team at support@barkprotocol.com</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Blinks</CardTitle>
+          <CardDescription>View and manage all your created Blinks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search Blinks"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <div className="flex space-x-2 w-full sm:w-auto">
+              <Select value={filterType} onValueChange={(value) => setFilterType(value as BlinkType | 'all')}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Filter by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="payment">Payment</SelectItem>
+                  <SelectItem value="gift">Gift</SelectItem>
+                  <SelectItem value="nft">NFT</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'name' | 'amount' | 'createdAt')}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="amount">Amount</SelectItem>
+                  <SelectItem value="createdAt">Date</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </Button>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-4">Loading your Blinks...</div>
+          ) : filteredAndSortedBlinks.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedBlinks.map((blink) => (
+                  <TableRow key={blink.id}>
+                    <TableCell className="font-medium">{blink.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        {getBlinkTypeIcon(blink.type)}
+                        <span className="ml-2 capitalize">{blink.type}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{blink.amount} {blink.currency}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                        ${blink.status === 'active' ? 'bg-green-100 text-green-800' :
+                          blink.status === 'expired' ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'}`}>
+                        {blink.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{new Date(blink.createdAt).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-4">No Blinks found. Create your first Blink!</div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -13,62 +13,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { AlertCircle, ArrowLeft, CreditCard, Gift, Image as ImageIcon, Repeat } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Repeat } from 'lucide-react'
 import { WalletButton } from "@/components/ui/wallet-button"
 
 const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
 const iconColor = "#D0BFB4"
 
-interface BlinkType {
-  type: string
+interface SubscriptionFormData {
   name: string
-}
-
-interface BlinkFormData {
-  name: string
-  type: string
   amount: string
   currency: string
+  frequency: string
   description: string
 }
 
-const initialFormData: BlinkFormData = {
+const initialFormData: SubscriptionFormData = {
   name: '',
-  type: 'payment',
   amount: '',
   currency: 'SOL',
+  frequency: 'monthly',
   description: '',
 }
 
-export default function CreateBlinkPage() {
+export default function CreateSubscriptionBlinkPage() {
   const router = useRouter()
   const { publicKey } = useWallet()
   const { toast } = useToast()
-  const [formData, setFormData] = useState<BlinkFormData>(initialFormData)
-  const [blinkTypes, setBlinkTypes] = useState<BlinkType[]>([])
+  const [formData, setFormData] = useState<SubscriptionFormData>(initialFormData)
   const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    const fetchBlinkTypes = async () => {
-      try {
-        const response = await fetch('/api/blinks/create')
-        if (!response.ok) {
-          throw new Error('Failed to fetch Blink types')
-        }
-        const data = await response.json()
-        setBlinkTypes(data.blinkTypes)
-      } catch (error) {
-        console.error('Error fetching Blink types:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load Blink types. Please try again.",
-          variant: "destructive",
-        })
-      }
-    }
-
-    fetchBlinkTypes()
-  }, [toast])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -84,7 +56,7 @@ export default function CreateBlinkPage() {
     if (!publicKey) {
       toast({
         title: "Error",
-        description: "Please connect your wallet to create a Blink.",
+        description: "Please connect your wallet to create a Subscription Blink.",
         variant: "destructive",
       })
       return
@@ -92,7 +64,7 @@ export default function CreateBlinkPage() {
 
     setIsLoading(true)
     try {
-      const response = await fetch('/api/blinks/create', {
+      const response = await fetch('/api/blinks/subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,20 +73,20 @@ export default function CreateBlinkPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create Blink')
+        throw new Error('Failed to create Subscription Blink')
       }
 
-      const newBlink = await response.json()
+      const newSubscription = await response.json()
       toast({
         title: "Success",
-        description: `Your ${formData.type} Blink "${formData.name}" has been created!`,
+        description: `Your Subscription Blink "${formData.name}" has been created!`,
       })
       router.push('/blinks')
     } catch (error) {
-      console.error('Error creating Blink:', error)
+      console.error('Error creating Subscription Blink:', error)
       toast({
         title: "Error",
-        description: "Failed to create Blink. Please try again.",
+        description: "Failed to create Subscription Blink. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -124,27 +96,12 @@ export default function CreateBlinkPage() {
 
   const handleBackToBlinks = () => router.push('/blinks')
 
-  const getBlinkTypeIcon = (type: string) => {
-    switch (type) {
-      case 'payment':
-        return <CreditCard className="h-4 w-4" style={{ color: iconColor }} />
-      case 'gift':
-        return <Gift className="h-4 w-4" style={{ color: iconColor }} />
-      case 'nft':
-        return <ImageIcon className="h-4 w-4" style={{ color: iconColor }} />
-      case 'subscription':
-        return <Repeat className="h-4 w-4" style={{ color: iconColor }} />
-      default:
-        return null
-    }
-  }
-
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
           <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
-          Create Blink
+          Create Subscription Blink
         </h1>
         <div className="flex items-center space-x-4">
           <WalletButton />
@@ -160,46 +117,28 @@ export default function CreateBlinkPage() {
           <AlertCircle className="h-4 w-4" style={{ color: iconColor }} />
           <AlertTitle>Wallet not connected</AlertTitle>
           <AlertDescription>
-            Please connect your wallet to create a Blink. You need a connected wallet to interact with the Solana blockchain.
+            Please connect your wallet to create a Subscription Blink. You need a connected wallet to interact with the Solana blockchain.
           </AlertDescription>
         </Alert>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Create a New Blink</CardTitle>
-          <CardDescription>Fill in the details to create your new Blink</CardDescription>
+          <CardTitle>Create a New Subscription Blink</CardTitle>
+          <CardDescription>Set up a recurring payment Blink</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Blink Name</Label>
+              <Label htmlFor="name">Subscription Name</Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Enter Blink name"
+                placeholder="Enter subscription name"
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Blink Type</Label>
-              <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select Blink type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {blinkTypes.map((blinkType) => (
-                    <SelectItem key={blinkType.type} value={blinkType.type}>
-                      <div className="flex items-center">
-                        {getBlinkTypeIcon(blinkType.type)}
-                        <span className="ml-2">{blinkType.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="amount">Amount</Label>
@@ -227,18 +166,32 @@ export default function CreateBlinkPage() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="frequency">Frequency</Label>
+              <Select value={formData.frequency} onValueChange={(value) => handleSelectChange('frequency', value)}>
+                <SelectTrigger id="frequency">
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="Enter Blink description"
+                placeholder="Enter subscription description"
                 rows={3}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading || !publicKey}>
-              {isLoading ? 'Creating Blink...' : 'Create Blink'}
+              {isLoading ? 'Creating Subscription Blink...' : 'Create Subscription Blink'}
             </Button>
           </form>
         </CardContent>

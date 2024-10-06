@@ -309,6 +309,9 @@ importers:
       '@types/bn.js':
         specifier: ^5.1.6
         version: 5.1.6
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.5
       eslint:
         specifier: ^8
         version: 8.57.1
@@ -4224,6 +4227,9 @@ packages:
 
   '@types/prop-types@15.7.13':
     resolution: {integrity: sha512-hCZTSvwbzWGvhqxp/RqVqwU999pBf2vp7hzIjiYOsl8wqOmUxkQ6ddw1cV3l8811+kdUFus/q4d1Y3E3SyEifA==}
+
+  '@types/qrcode@1.5.5':
+    resolution: {integrity: sha512-CdfBi/e3Qk+3Z/fXYShipBT13OJ2fDO2Q2w5CIP5anLTLIndQG9z6P1cnm+8zCWSpm5dnxMFd/uREtb0EXuQzg==}
 
   '@types/react-dom@18.3.0':
     resolution: {integrity: sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==}
@@ -14756,6 +14762,10 @@ snapshots:
       '@types/retry': 0.12.5
 
   '@types/prop-types@15.7.13': {}
+
+  '@types/qrcode@1.5.5':
+    dependencies:
+      '@types/node': 22.7.4
 
   '@types/react-dom@18.3.0':
     dependencies:
