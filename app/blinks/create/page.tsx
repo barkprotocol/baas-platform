@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -18,18 +18,13 @@ import { WalletButton } from "@/components/ui/wallet-button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
+import { tokenIcons, PROGRAM_ID, IDL } from '@/lib/constants'
 
 // Initialize Solana connection (replace with your RPC endpoint)
 const connection = new Connection('https://api.mainnet-beta.solana.com')
 
 const iconColor = "#D0BFB4"
 const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
-
-const tokenIcons = {
-  SOL: "https://ucarecdn.com/8bcc4664-01b2-4a88-85bc-9ebce234f08b/sol.png",
-  USDC: "https://ucarecdn.com/67e17a97-f3bd-46c0-8627-e13b8b939d26/usdc.png",
-  BARK: "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png",
-}
 
 export default function CreateBlinkPage() {
   const router = useRouter()
@@ -45,6 +40,7 @@ export default function CreateBlinkPage() {
   const [selectedToken, setSelectedToken] = useState('SOL')
   const [blinkImage, setBlinkImage] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isImageUploading, setIsImageUploading] = useState(false)
   const [isBlinkVisible, setIsBlinkVisible] = useState(true)
 
   useEffect(() => {
@@ -54,15 +50,20 @@ export default function CreateBlinkPage() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleBackToBlinks = () => router.push('/blinks')
+  const handleBackToBlinks = useCallback(() => router.push('/blinks'), [router])
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setBlinkImage(e.target.files[0])
+      setIsImageUploading(true)
+      // Simulate image upload delay
+      setTimeout(() => {
+        setBlinkImage(e.target.files![0])
+        setIsImageUploading(false)
+      }, 1000)
     }
-  }
+  }, [])
 
-  const handleCreateBlink = async (e: React.FormEvent) => {
+  const handleCreateBlink = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (!publicKey || !signTransaction) {
       toast({
@@ -114,13 +115,21 @@ export default function CreateBlinkPage() {
       console.error('Error creating Blink:', error)
       toast({
         title: "Error",
-        description: "Failed to create Blink. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create Blink. Please try again.",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [publicKey, signTransaction, blinkName, description, amount, selectedToken, blinkType, expirationDays, isRecurring, recurringFrequency, router, toast])
+
+  const isFormValid = useMemo(() => {
+    return blinkName.trim() !== '' && parseFloat(amount) > 0
+  }, [blinkName, amount])
+
+  const creationFee = useMemo(() => {
+    return parseFloat(amount) * 0.002 + 0.000005
+  }, [amount])
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -164,12 +173,13 @@ export default function CreateBlinkPage() {
                 value={blinkName}
                 onChange={(e) => setBlinkName(e.target.value)}
                 required
+                aria-label="Blink Name"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="blink-type">Blink Type</Label>
               <Select value={blinkType} onValueChange={setBlinkType}>
-                <SelectTrigger>
+                <SelectTrigger id="blink-type" aria-label="Blink Type">
                   <SelectValue placeholder="Select Blink type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,6 +203,7 @@ export default function CreateBlinkPage() {
                     onChange={(e) => setAmount(e.target.value)}
                     className="pl-10"
                     required
+                    aria-label={`Amount in ${selectedToken}`}
                   />
                   <Image
                     src={tokenIcons[selectedToken as keyof typeof tokenIcons]}
@@ -203,28 +214,18 @@ export default function CreateBlinkPage() {
                   />
                 </div>
                 <Select value={selectedToken} onValueChange={setSelectedToken}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="w-[100px]" aria-label="Select Token">
                     <SelectValue placeholder="Token" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SOL">
-                      <div className="flex items-center">
-                        <Image src={tokenIcons.SOL} alt="SOL icon" width={16} height={16} className="mr-2" />
-                        SOL
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="USDC">
-                      <div className="flex items-center">
-                        <Image src={tokenIcons.USDC} alt="USDC icon" width={16} height={16} className="mr-2" />
-                        USDC
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="BARK">
-                      <div className="flex items-center">
-                        <Image src={tokenIcons.BARK} alt="BARK icon" width={16} height={16} className="mr-2" />
-                        BARK
-                      </div>
-                    </SelectItem>
+                    {Object.entries(tokenIcons).map(([token, iconUrl]) => (
+                      <SelectItem key={token} value={token}>
+                        <div className="flex items-center">
+                          <Image src={iconUrl} alt={`${token} icon`} width={16} height={16} className="mr-2" />
+                          {token}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -237,6 +238,7 @@ export default function CreateBlinkPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
+                aria-label="Blink Description"
               />
             </div>
             <div className="space-y-2">
@@ -248,27 +250,35 @@ export default function CreateBlinkPage() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   className="hidden"
+                  aria-label="Upload Blink Image"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => document.getElementById('blink-image')?.click()}
+                  disabled={isImageUploading}
                 >
-                  <Upload className="mr-2 h-4 w-4" style={{ color: iconColor }} />
-                  Upload Image
+                  {isImageUploading ? (
+                    <Zap className="mr-2 h-4 w-4 animate-spin" style={{ color: iconColor }} />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" style={{ color: iconColor }} />
+                  )}
+                  {isImageUploading ? 'Uploading...' : 'Upload Image'}
                 </Button>
                 {blinkImage && <span className="text-sm">{blinkImage.name}</span>}
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Expiration</Label>
+              <Label htmlFor="expiration">Expiration</Label>
               <div className="flex items-center space-x-2">
                 <Slider
+                  id="expiration"
                   value={[expirationDays]}
                   onValueChange={(value) => setExpirationDays(value[0])}
                   max={30}
                   step={1}
                   className="flex-grow"
+                  aria-label="Expiration Days"
                 />
                 <span className="w-12 text-right">{expirationDays} days</span>
               </div>
@@ -278,6 +288,7 @@ export default function CreateBlinkPage() {
                 id="recurring"
                 checked={isRecurring}
                 onCheckedChange={setIsRecurring}
+                aria-label="Recurring Blink"
               />
               <Label htmlFor="recurring">Recurring Blink</Label>
             </div>
@@ -285,7 +296,7 @@ export default function CreateBlinkPage() {
               <div className="space-y-2">
                 <Label htmlFor="recurring-frequency">Recurring Frequency</Label>
                 <Select value={recurringFrequency} onValueChange={setRecurringFrequency}>
-                  <SelectTrigger>
+                  <SelectTrigger id="recurring-frequency" aria-label="Recurring Frequency">
                     <SelectValue placeholder="Select frequency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -297,9 +308,14 @@ export default function CreateBlinkPage() {
               </div>
             )}
             <div className="text-sm text-muted-foreground">
-              Creation Fee: 0.2% + Solana network fee
+              Creation Fee: {creationFee.toFixed(6)} SOL
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading || !publicKey}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || !publicKey || !isFormValid}
+              aria-label="Create Blink"
+            >
               {isLoading ? 'Creating Blink...' : 'Create Blink'}
             </Button>
           </form>
@@ -316,7 +332,18 @@ export default function CreateBlinkPage() {
             <code className="text-sm">
               https://blinks.barkprotocol.com/{blinkName || 'your-blink-name'}
             </code>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(`https://blinks.barkprotocol.com/${blinkName || 'your-blink-name'}`)
+                toast({
+                  title: "Link Copied",
+                  description: "The Blink link has been copied to your clipboard.",
+                })
+              }}
+              aria-label="Copy Blink Link"
+            >
               <LinkIcon className="h-4 w-4 mr-2" style={{ color: iconColor }} />
               Copy
             </Button>
