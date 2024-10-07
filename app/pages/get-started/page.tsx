@@ -6,11 +6,11 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, ArrowLeft, Check, RefreshCcw } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, RefreshCcw, Zap, Coins, CreditCard, PlusCircle, Landmark, Gift, Store, ArrowRightLeft, Gem, Users } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { WalletButton } from "@/components/ui/wallet-button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { BlinkForm } from '@/components/get-started/blink-form'
 import { DonationForm } from '@/components/get-started/donation-form'
 import { PaymentForm } from '@/components/get-started/payment-form'
@@ -23,6 +23,7 @@ import { StakingForm } from '@/components/get-started/staking-form'
 import { MembershipForm } from '@/components/get-started/membership-form'
 import { TieredTokenForm } from '@/components/get-started/tiered-token-form'
 import { createBlink, processDonation, makePayment, mintNFT, startCrowdfunding, sendGift, createMerchant, performSwap, stakeTokens, createMembership, createTieredToken } from '@/app/actions/solana/solana'
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Tier {
   name: string;
@@ -41,14 +42,14 @@ const tiers: Tier[] = [
   {
     name: "Pro",
     description: "Advanced features for small businesses",
-    features: ["All Basic features", "Mint NFTs", "Start Crowdfunding Campaigns", "Staking", "Tiered Tokens"],
+    features: ["All Basic features", "Mint NFTs", "Airdrop Campaigns", "Governance", "Rewards"],
     price: "$19.99/month"
   },
   {
     name: "Enterprise",
     description: "Full suite for large organizations",
-    features: ["All Pro features", "Send Gifts", "Create Merchant Accounts", "Membership Programs", "Priority Support"],
-    price: "Custom pricing"
+    features: ["All Pro features", "Send Gifts", "Create Merchant Accounts", "Staking", "Membership Programs", "Start Crowdfunding Campaigns", "Treasury Rewards"],
+    price: "$29.99/month"
   }
 ];
 
@@ -191,6 +192,23 @@ export default function GetStartedPage() {
     setActiveTab('blink') // Move to the first feature tab after selecting a tier
   }, [])
 
+  const renderTabIcon = (tab: string) => {
+    switch (tab) {
+      case 'blink': return <Zap className="w-4 h-4 mr-2" />
+      case 'donations': return <Coins className="w-4 h-4 mr-2" />
+      case 'payments': return <CreditCard className="w-4 h-4 mr-2" />
+      case 'swap': return <ArrowRightLeft className="w-4 h-4 mr-2" />
+      case 'nft': return <PlusCircle className="w-4 h-4 mr-2" />
+      case 'crowdfunding': return <Landmark className="w-4 h-4 mr-2" />
+      case 'staking': return <Gem className="w-4 h-4 mr-2" />
+      case 'tieredToken': return <Gem className="w-4 h-4 mr-2" />
+      case 'gift': return <Gift className="w-4 h-4 mr-2" />
+      case 'merchant': return <Store className="w-4 h-4 mr-2" />
+      case 'membership': return <Users className="w-4 h-4 mr-2" />
+      default: return null
+    }
+  }
+
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -215,10 +233,10 @@ export default function GetStartedPage() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex space-x-4">
           <div className="text-sm font-medium">
-            SOL Price: {isPriceFetching ? 'Fetching...' : (solPrice ? `$${solPrice.toFixed(2)}` : 'N/A')}
+            SOL Price: {isPriceFetching ? <Skeleton className="h-4 w-16" /> : (solPrice ? `$${solPrice.toFixed(2)}` : 'N/A')}
           </div>
           <div className="text-sm font-medium">
-            USDC Price: {isPriceFetching ? 'Fetching...' : (usdcPrice ? `$${usdcPrice.toFixed(2)}` : 'N/A')}
+            USDC Price: {isPriceFetching ? <Skeleton className="h-4 w-16" /> : (usdcPrice ? `$${usdcPrice.toFixed(2)}` : 'N/A')}
           </div>
         </div>
         <Button onClick={fetchPrices} variant="outline" size="sm" className="flex items-center" disabled={isPriceFetching}>
@@ -229,23 +247,8 @@ export default function GetStartedPage() {
       </div>
       
       <Tabs value={activeTab} className="space-y-6" onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-          <TabsTrigger value="tiers">Select Tier</TabsTrigger>
-          <TabsTrigger value="blink" disabled={!selectedTier}>Blink</TabsTrigger>
-          <TabsTrigger value="donations" disabled={!selectedTier}>Donations</TabsTrigger>
-          <TabsTrigger value="payments" disabled={!selectedTier}>Payments</TabsTrigger>
-          <TabsTrigger value="swap" disabled={!selectedTier}>Swap</TabsTrigger>
-          <TabsTrigger value="nft" disabled={!selectedTier || selectedTier === "Basic"}>Mint NFT</TabsTrigger>
-          <TabsTrigger value="crowdfunding" disabled={!selectedTier || selectedTier === "Basic"}>Crowdfunding</TabsTrigger>
-          <TabsTrigger value="staking" disabled={!selectedTier || selectedTier === "Basic"}>Staking</TabsTrigger>
-          <TabsTrigger value="tieredToken" disabled={!selectedTier || selectedTier === "Basic"}>Tiered Tokens</TabsTrigger>
-          <TabsTrigger value="gift" disabled={!selectedTier || selectedTier !== "Enterprise"}>Gift</TabsTrigger>
-          <TabsTrigger value="merchant" disabled={!selectedTier || selectedTier !== "Enterprise"}>Merchant</TabsTrigger>
-          <TabsTrigger value="membership" disabled={!selectedTier || selectedTier !== "Enterprise"}>Membership</TabsTrigger>
-        </TabsList>
-        
         <TabsContent value="tiers">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-12">
             {tiers.map((tier) => (
               <Card key={tier.name} className={`flex flex-col ${selectedTier === tier.name ? 'ring-2 ring-primary' : ''}`}>
                 <CardHeader>
@@ -277,139 +280,57 @@ export default function GetStartedPage() {
           </div>
         </TabsContent>
         
-        <TabsContent value="blink">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create a New Blink</CardTitle>
-              <CardDescription>Set up your Blink for instant payments.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BlinkForm onSubmit={(data) => handleSubmit('blink', data)} isLoading={isLoading} isWalletConnected={connected} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <TabsList className="flex flex-wrap justify-start gap-2 mb-6">
+          <TabsTrigger value="tiers" className="flex-grow sm:flex-grow-0">Select Tier</TabsTrigger>
+          {['blink', 'donations', 'payments', 'swap', 'nft', 'crowdfunding', 'staking', 'tieredToken', 'gift', 'merchant', 'membership'].map((tab) => (
+            <TabsTrigger 
+              key={tab}
+              value={tab} 
+              className="flex-grow sm:flex-grow-0" 
+              disabled={!selectedTier || (selectedTier === "Basic" && ['nft', 'crowdfunding', 'staking', 'tieredToken'].includes(tab)) || (selectedTier !== "Enterprise" && ['gift', 'merchant', 'membership'].includes(tab))}
+            >
+              {renderTabIcon(tab)}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
         
-        <TabsContent value="donations">
+        {activeTab !== 'tiers' && (
           <Card>
             <CardHeader>
-              <CardTitle>Process Donations</CardTitle>
-              <CardDescription>Receive donations for your cause.</CardDescription>
+              <CardTitle className="flex items-center">
+                {renderTabIcon(activeTab)}
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </CardTitle>
+              <CardDescription>
+                {activeTab === 'blink' && "Set up your Blink for instant payments."}
+                {activeTab === 'donations' && "Receive donations for your cause."}
+                {activeTab === 'payments' && "Send payments quickly and securely."}
+                {activeTab === 'swap' && "Exchange one token for another quickly and easily."}
+                {activeTab === 'nft' && "Create a unique digital asset on the blockchain."}
+                {activeTab === 'crowdfunding' && "Raise funds for your project or cause."}
+                {activeTab === 'staking' && "Earn rewards by staking your tokens."}
+                {activeTab === 'tieredToken' && "Set up a tiered token system for your project."}
+                {activeTab === 'gift' && "Spread joy with digital gifts."}
+                {activeTab === 'merchant' && "Set up your merchant account to start selling."}
+                {activeTab === 'membership' && "Set up a membership program for your organization."}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <DonationForm onSubmit={(data) => handleSubmit('donation', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />
+              {activeTab === 'blink' && <BlinkForm onSubmit={(data) => handleSubmit('blink', data)} isLoading={isLoading} isWalletConnected={connected} />}
+              {activeTab === 'donations' && <DonationForm onSubmit={(data) => handleSubmit('donation', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              {activeTab === 'payments' && <PaymentForm onSubmit={(data) => handleSubmit('payment', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              {activeTab === 'swap' && <SwapForm onSubmit={(data) => handleSubmit('swap', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              {activeTab === 'nft' && <NFTForm onSubmit={(data) => handleConfirmation('nft')} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} />}
+              {activeTab === 'crowdfunding' && <CrowdfundingForm onSubmit={(data) => handleConfirmation('crowdfunding')} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              {activeTab === 'staking' && <StakingForm onSubmit={(data) => handleSubmit('staking', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} />}
+              {activeTab === 'tieredToken' && <TieredTokenForm onSubmit={(data) => handleConfirmation('tieredToken')} isLoading={isLoading} isWalletConnected={connected} />}
+              {activeTab === 'gift' && <GiftForm onSubmit={(data) => handleSubmit('gift', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              {activeTab === 'merchant' && <MerchantForm onSubmit={(data) => handleConfirmation('merchant')} isLoading={isLoading} isWalletConnected={connected} />}
+              {activeTab === 'membership' && <MembershipForm onSubmit={(data) => handleConfirmation('membership')} isLoading={isLoading} isWalletConnected={connected} />}
             </CardContent>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Make a Payment</CardTitle>
-              <CardDescription>Send payments quickly and securely.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PaymentForm onSubmit={(data) => handleSubmit('payment', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="swap">
-          <Card>
-            <CardHeader>
-              <CardTitle>Swap Tokens</CardTitle>
-              <CardDescription>Exchange one token for another quickly and easily.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SwapForm onSubmit={(data) => handleSubmit('swap', data)} is
-
-Loading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="nft">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mint an NFT</CardTitle>
-              <CardDescription>Create a unique digital asset on the blockchain.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <NFTForm onSubmit={(data) => handleConfirmation('nft')} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="crowdfunding">
-          <Card>
-            <CardHeader>
-              <CardTitle>Start a Crowdfunding Campaign</CardTitle>
-              <CardDescription>Raise funds for your project or cause.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CrowdfundingForm onSubmit={(data) => handleConfirmation('crowdfunding')} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="staking">
-          <Card>
-            <CardHeader>
-              <CardTitle>Stake Tokens</CardTitle>
-              <CardDescription>Earn rewards by staking your tokens.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <StakingForm onSubmit={(data) => handleSubmit('staking', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="tieredToken">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create Tiered Tokens</CardTitle>
-              <CardDescription>Set up a tiered token system for your project.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TieredTokenForm onSubmit={(data) => handleConfirmation('tieredToken')} isLoading={isLoading} isWalletConnected={connected} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="gift">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create or Send a Gift</CardTitle>
-              <CardDescription>Spread joy with digital gifts.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <GiftForm onSubmit={(data) => handleSubmit('gift', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="merchant">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create Merchant Account</CardTitle>
-              <CardDescription>Set up your merchant account to start selling.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MerchantForm onSubmit={(data) => handleConfirmation('merchant')} isLoading={isLoading} isWalletConnected={connected} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="membership">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create Membership Program</CardTitle>
-              <CardDescription>Set up a membership program for your organization.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MembershipForm onSubmit={(data) => handleConfirmation('membership')} isLoading={isLoading} isWalletConnected={connected} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        )}
       </Tabs>
 
       <Dialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
@@ -420,10 +341,10 @@ Loading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice=
               Are you sure you want to proceed with this action? This cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end space-x-2">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmationOpen(false)}>Cancel</Button>
             <Button onClick={() => handleSubmit(confirmationAction, {})}>Confirm</Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
