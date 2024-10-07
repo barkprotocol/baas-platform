@@ -1,342 +1,472 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { AlertCircle, Gift, CreditCard, Coins, PlusCircle, Send, ShoppingBag, Zap, Package, Store, Landmark, ArrowLeft, Download } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { AlertCircle, Plus, Search, CreditCard, Gift, Image as ImageIcon, ArrowLeft, BarChart, PieChart, Activity, Edit, Trash2, PawPrint } from 'lucide-react'
-import { WalletButton } from "@/components/ui/wallet-button"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Badge } from "@/components/ui/badge"
-import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { BlinkboardSidebar } from '@/components/ui/layout/blinkboard/sidebar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Loader2 } from 'lucide-react'
 
-const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
-const iconColor = "#BBA597"
-
-type BlinkType = 'image' | 'text' | 'link'
-type BlinkStatus = 'active' | 'completed' | 'expired'
-
-interface Blink {
-  id: string
-  name: string
-  type: BlinkType
-  amount: number
-  status: BlinkStatus
-  createdAt: Date
+interface ApiResponse {
+  success: boolean;
 }
 
-const mockBlinks: Blink[] = [
-  { id: '1', name: 'Airdrop Campaign', type: 'image', amount: 100, status: 'active', createdAt: new Date('2024-06-01') },
-  { id: '2', name: 'Product Launch', type: 'text', amount: 50, status: 'completed', createdAt: new Date('2024-05-15') },
-  { id: '3', name: 'Newsletter Signup', type: 'link', amount: 25, status: 'active', createdAt: new Date('2024-06-10') },
-  { id: '4', name: 'BARK NFT membership', type: 'image', amount: 75, status: 'expired', createdAt: new Date('2024-04-01') },
-  { id: '5', name: 'Governance', type: 'link', amount: 30, status: 'active', createdAt: new Date('2024-06-05') },
-]
+// BARK Blinkboard Enterprice API functions (replace these with actual API calls)
+const createBlink = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const processDonation = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const makePayment = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const mintNFT = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const startCrowdfunding = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const sendGift = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const createMerchant = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
 
-const activityData = [
-  { name: 'Week 1', blinks: 4, interactions: 120 },
-  { name: 'Week 2', blinks: 6, interactions: 200 },
-  { name: 'Week 3', blinks: 5, interactions: 180 },
-  { name: 'Week 4', blinks: 8, interactions: 250 },
-]
-
-export default function BlinkboardBasicPage() {
+export default function GetStartedPage() {
   const router = useRouter()
-  const { publicKey } = useWallet()
   const { toast } = useToast()
-  const [blinks, setBlinks] = useState<Blink[]>(mockBlinks)
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<BlinkType | 'all'>('all')
-  const [sortBy, setSortBy] = useState<'name' | 'amount' | 'createdAt'>('createdAt')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'expired'>('all')
+  const [activeTab, setActiveTab] = useState('blink')
+  const [isLoading, setIsLoading] = useState(false)
+  const nftImageRef = useRef<HTMLInputElement>(null)
+  const campaignImageRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    // Simulating API call
-    const timer = setTimeout(() => {
-      setBlinks(mockBlinks)
-      setIsLoading(false)
-    }, 1000)
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, action: string) => {
+    e.preventDefault()
+    setIsLoading(true)
 
-    return () => clearTimeout(timer)
-  }, [])
+    const formData = new FormData(e.currentTarget)
+    const data = Object.fromEntries(formData.entries())
 
-  const filteredBlinks = useMemo(() => {
-    return blinks
-      .filter(blink => 
-        blink.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (filterType === 'all' || blink.type === filterType) &&
-        (activeTab === 'all' || blink.status === activeTab)
-      )
-      .sort((a, b) => {
-        if (sortBy === 'name') {
-          return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-        } else if (sortBy === 'amount') {
-          return sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount
-        } else {
-          return sortOrder === 'asc' ? a.createdAt.getTime() - b.createdAt.getTime() : b.createdAt.getTime() - a.createdAt.getTime()
-        }
-      })
-  }, [blinks, searchTerm, filterType, sortBy, sortOrder, activeTab])
+    try {
+      let result: ApiResponse;
+      switch (action) {
+        case 'blink':
+          result = await createBlink(data)
+          break
+        case 'donation':
+          result = await processDonation(data)
+          break
+        case 'payment':
+          result = await makePayment(data)
+          break
+        case 'nft':
+          result = await mintNFT(data)
+          break
+        case 'crowdfunding':
+          result = await startCrowdfunding(data)
+          break
+        case 'gift':
+          result = await sendGift(data)
+          break
+        case 'merchant':
+          result = await createMerchant(data)
+          break
+        default:
+          throw new Error('Invalid action')
+      }
 
-  const handleCreateBlink = () => {
-    if (!publicKey) {
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `${action.charAt(0).toUpperCase() + action.slice(1)} processed successfully.`,
+        })
+        // Reset form
+        e.currentTarget.reset()
+      } else {
+        throw new Error('Operation failed')
+      }
+    } catch (error) {
       toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to create a Blink.",
+        title: "Error",
+        description: `Failed to process ${action}. Please try again.`,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBackToMain = () => {
+    router.push('/')
+  }
+
+  const handleImageDownload = (inputRef: React.RefObject<HTMLInputElement>, imageName: string) => {
+    const imageUrl = inputRef.current?.value
+    if (!imageUrl) {
+      toast({
+        title: "Error",
+        description: "No image URL provided.",
         variant: "destructive",
       })
       return
     }
-    // Implement Blink creation logic here
-    console.log("Creating new Blink")
-  }
 
-  const handleEditBlink = (id: string) => {
-    // Implement edit logic
-    console.log(`Editing Blink with id: ${id}`)
-  }
-
-  const handleDeleteBlink = (id: string) => {
-    // Implement delete logic
-    console.log(`Deleting Blink with id: ${id}`)
+    fetch(imageUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = imageName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => toast({
+        title: "Error",
+        description: "Failed to download image. Please try again.",
+        variant: "destructive",
+      }));
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-sand-50">
-      <BlinkboardSidebar />
-      <div className="flex-1 p-4 lg:p-8 overflow-auto">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
-            <div className="flex items-center space-x-4">
-              <Image src={titleIconUrl} alt="BARK BLINKS icon" width={48} height={48} className="rounded-full" />
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-sand-900">Blinkboard</h1>
-                <div className="flex items-center mt-1">
-                  <Badge variant="secondary" className="bg-sand-200 text-sand-800 mr-2">Basic</Badge>
-                  <PawPrint className="h-5 w-5" style={{ color: iconColor }} />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <Button onClick={() => router.push('/tiers')} variant="outline" className="flex items-center w-full sm:w-auto">
-                <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: iconColor}} />
-                Back to Tiers
-              </Button>
-              <WalletButton />
-              <Button onClick={handleCreateBlink} disabled={!publicKey} className="w-full sm:w-auto bg-sand-600 hover:bg-sand-700 text-white">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Blink
-              </Button>
-            </div>
-          </div>
-
-          <Alert className="bg-sand-100 border-sand-300 text-sand-800">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle className="text-sand-900 font-semibold">Basic Tier</AlertTitle>
-            <AlertDescription>
-              You are using the Basic tier of Blinkboard. Enjoy essential features for individuals and small teams.
-            </AlertDescription>
-          </Alert>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold text-sand-800">Total Blinks</CardTitle>
-                <BarChart className="h-5 w-5 text-sand-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-sand-900">{blinks.length}</div>
-                <p className="text-sm text-sand-600">+20.1% from last month</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold text-sand-800">Total Value</CardTitle>
-                <PieChart className="h-5 w-5 text-sand-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-sand-900">
-                  {blinks.reduce((sum, blink) => sum + blink.amount, 0)} SOL
-                </div>
-                <p className="text-sm text-sand-600">+10.5% from last month</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold text-sand-800">Active Blinks</CardTitle>
-                <Activity className="h-5 w-5 text-sand-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-sand-900">
-                  {blinks.filter(blink => blink.status === 'active').length}
-                </div>
-                <p className="text-sm text-sand-600">+5.2% from last month</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="bg-white shadow-lg">
+    <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-0">Get Started with BARK Protocol</h1>
+        <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
+          <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: '#D0BFB4'}} /> Back to Main
+        </Button>
+      </div>
+      <Alert className="mb-6">
+        <AlertCircle className="h-4 w-4" aria-hidden="true" style={{color: '#D0BFB4'}} />
+        <AlertTitle>Welcome to your Blinkboard!</AlertTitle>
+        <AlertDescription>
+          Here you can create Solana Blinks, process donations, make payments, mint NFTs, start crowdfunding campaigns, send gifts, and set up your merchant account.
+        </AlertDescription>
+      </Alert>
+      
+      <Tabs defaultValue="blink" className="space-y-6" onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <TabsTrigger value="blink" className="flex items-center justify-center"><Zap className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Blink</TabsTrigger>
+          <TabsTrigger value="donations" className="flex items-center justify-center"><Coins className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Donations</TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center justify-center"><CreditCard className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Payments</TabsTrigger>
+          <TabsTrigger value="nft" className="flex items-center justify-center"><PlusCircle className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Mint NFT</TabsTrigger>
+          <TabsTrigger value="crowdfunding" className="flex items-center justify-center"><Landmark className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Crowdfunding</TabsTrigger>
+          <TabsTrigger value="gift" className="flex items-center justify-center"><Gift className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Gift</TabsTrigger>
+          <TabsTrigger value="merchant" className="flex items-center justify-center"><Store className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Merchant</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="blink">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-sand-900">Blink Activity</CardTitle>
+              <CardTitle className="flex items-center"><Zap className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Create a New Blink</CardTitle>
+              <CardDescription>Set up your Blink for instant payments.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] sm:h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={activityData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
-                    <XAxis dataKey="name" stroke="#888888" />
-                    <YAxis yAxisId="left" stroke="#8884d8" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                    <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} />
-                    <Legend />
-                    <Line yAxisId="left" type="monotone" dataKey="blinks" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-                    <Line yAxisId="right" type="monotone" dataKey="interactions" stroke="#82ca9d" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <form onSubmit={(e) => handleSubmit(e, 'blink')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="blinkName">Blink Name</Label>
+                    <Input id="blinkName" name="blinkName" placeholder="Enter your Blink name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="blinkDescription">Description</Label>
+                    <Textarea id="blinkDescription" name="blinkDescription" placeholder="Describe your Blink" required />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Blink'
+                  )}
+                </Button>
+              </form>
             </CardContent>
           </Card>
-
-          <Card className="bg-white shadow-lg">
+        </TabsContent>
+        
+        <TabsContent value="donations">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-sand-900">Your Blinks</CardTitle>
+              <CardTitle className="flex items-center"><Coins className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Process Donations</CardTitle>
+              <CardDescription>Receive donations for your cause.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0 lg:space-x-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-sand-400" />
-                    <Input
-                      placeholder="Search Blinks..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 bg-sand-50 border-sand-200 focus:border-sand-400 focus:ring-sand-400"
-                    />
+              <form onSubmit={(e) => handleSubmit(e, 'donation')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="donationAmount">Donation Amount</Label>
+                    <Input id="donationAmount" name="donationAmount" placeholder="Enter donation amount" type="number" step="0.01" required />
                   </div>
-                  <Select value={filterType} onValueChange={(value: BlinkType | 'all') => setFilterType(value)}>
-                    <SelectTrigger className="w-full sm:w-[180px] bg-sand-50 border-sand-200">
-                      <SelectValue placeholder="Filter by type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="image">Image</SelectItem>
-                      <SelectItem value="text">Text</SelectItem>
-                      <SelectItem value="link">Link</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="donorName">Donor Name</Label>
+                    <Input id="donorName" name="donorName" placeholder="Enter donor's name" required />
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
-                  <Select value={sortBy} onValueChange={(value: 'name' | 'amount' | 'createdAt') => setSortBy(value)}>
-                    <SelectTrigger className="w-full sm:w-[180px] bg-sand-50 border-sand-200">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name">Name</SelectItem>
-                      <SelectItem value="amount">Amount</SelectItem>
-                      <SelectItem value="createdAt">Date Created</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="w-full sm:w-auto bg-sand-50 border-sand-200 text-sand-800 hover:bg-sand-100">
-                    {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Process Donation'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><CreditCard className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Make a Payment</CardTitle>
+              <CardDescription>Send payments quickly and securely.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'payment')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="paymentAmount">Payment Amount</Label>
+                    <Input id="paymentAmount" name="paymentAmount" placeholder="Enter payment amount" type="number" step="0.01" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                    <Select name="paymentMethod" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="usdc">USDC</SelectItem>
+                        <SelectItem value="bark">BARK</SelectItem>
+                        <SelectItem value="sol">SOL</SelectItem>
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                        <SelectItem value="solana_pay">Solana Pay</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="recipientAddress">Recipient Address</Label>
+                    <Input id="recipientAddress" name="recipientAddress" placeholder="Enter recipient's address" required />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Payment'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="nft">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><PlusCircle className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Mint an NFT</CardTitle>
+              <CardDescription>Create a unique digital asset on the blockchain.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'nft')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftName">NFT Name</Label>
+                    <Input id="nftName" name="nftName" placeholder="Enter NFT name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftDescription">NFT Description</Label>
+                    <Textarea id="nftDescription" name="nftDescription" placeholder="Describe your NFT" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftImage">NFT Image URL</Label>
+                    <Input id="nftImage" name="nftImage" placeholder="Enter image URL" required ref={nftImageRef} />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftCollection">Collection</Label>
+                    <Select name="nftCollection">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a collection" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="collection1">BARK NFT Collection 1</SelectItem>
+                        <SelectItem value="collection2">BARK NFT Collection 2</SelectItem>
+                        <SelectItem value="collection3">BARK NFT Collection 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftRoyalty">Royalty Percentage</Label>
+                    <Input id="nftRoyalty" name="nftRoyalty" type="number" min="0" max="100" step="0.1" placeholder="Enter royalty percentage" required />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="nftSoldable" name="nftSoldable" />
+                    <Label htmlFor="nftSoldable">List for sale immediately</Label>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftPrice">Price (if listed for sale)</Label>
+                    <Input id="nftPrice" name="nftPrice" type="number" step="0.01" placeholder="Enter price" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Minting...
+                      </>
+                    ) : (
+                      'Mint NFT'
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => handleImageDownload(nftImageRef, 'nft-image.png')}>
+                    <Download className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />
+                    Download Image
                   </Button>
                 </div>
-              </div>
-              <Tabs value={activeTab} onValueChange={(value: 'all' | 'active' | 'completed' | 'expired') => setActiveTab(value)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-sand-100">
-                  <TabsTrigger value="all" className="data-[state=active]:bg-sand-200 data-[state=active]:text-sand-900">All</TabsTrigger>
-                  <TabsTrigger value="active" className="data-[state=active]:bg-sand-200 data-[state=active]:text-sand-900">Active</TabsTrigger>
-                  <TabsTrigger value="completed" className="data-[state=active]:bg-sand-200 data-[state=active]:text-sand-900">Completed</TabsTrigger>
-                  <TabsTrigger value="expired" className="data-[state=active]:bg-sand-200 data-[state=active]:text-sand-900">Expired</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <div className="overflow-x-auto mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-sand-100">
-                      <TableHead className="text-sand-800">Name</TableHead>
-                      <TableHead className="text-sand-800">Type</TableHead>
-                      <TableHead className="text-sand-800">Amount</TableHead>
-                      <TableHead className="text-sand-800">Status</TableHead>
-                      <TableHead className="text-sand-800">Created At</TableHead>
-                      <TableHead className="text-sand-800">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          <div className="flex justify-center items-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sand-600"></div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredBlinks.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-sand-600">No Blinks found</TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredBlinks.map((blink) => (
-                        <TableRow key={blink.id} className="hover:bg-sand-50">
-                          <TableCell className="font-medium text-sand-900">{blink.name}</TableCell>
-                          <TableCell>{blink.type}</TableCell>
-                          <TableCell>{blink.amount} SOL</TableCell>
-                          <TableCell>
-                            <Badge variant={blink.status === 'active' ? 'default' : blink.status === 'completed' ? 'secondary' : 'destructive'} className="text-xs">
-                              {blink.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{blink.createdAt.toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="outline" size="icon" onClick={() => handleEditBlink(blink.id)} className="bg-sand-50 border-sand-200 hover:bg-sand-100">
-                                      <Edit className="h-4 w-4 text-sand-600" />
-                                      <span className="sr-only">Edit</span>
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Edit Blink</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="outline" size="icon" onClick={() => handleDeleteBlink(blink.id)} className="bg-sand-50 border-sand-200 hover:bg-sand-100">
-                                      <Trash2 className="h-4 w-4 text-sand-600" />
-                                      <span className="sr-only">Delete</span>
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete Blink</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              </form>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="crowdfunding">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Landmark className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Start a Crowdfunding Campaign</CardTitle>
+              <CardDescription>Raise funds for your project or cause.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'crowdfunding')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignName">Campaign Name</Label>
+                    <Input id="campaignName" name="campaignName" placeholder="Enter campaign name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignGoal">Funding Goal</Label>
+                    <Input id="campaignGoal" name="campaignGoal" placeholder="Enter funding goal" type="number" step="0.01" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignDescription">Campaign Description</Label>
+                    <Textarea id="campaignDescription" name="campaignDescription" placeholder="Describe your campaign" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignImage">Campaign Image URL</Label>
+                    <Input id="campaignImage" name="campaignImage" placeholder="Enter image URL" required ref={campaignImageRef} />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      'Start Campaign'
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => handleImageDownload(campaignImageRef, 'campaign-image.png')}>
+                    <Download className="w-4 h-4 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />
+                    Download Image
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="gift">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Gift className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Create or Send a Gift</CardTitle>
+              <CardDescription>Spread joy with digital gifts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'gift')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="giftType">Gift Type</Label>
+                    <Input id="giftType" name="giftType" placeholder="Enter gift type" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="giftAmount">Gift Amount</Label>
+                    <Input id="giftAmount" name="giftAmount" placeholder="Enter gift amount" type="number" step="0.01" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="recipientEmail">Recipient Email</Label>
+                    <Input id="recipientEmail" name="recipientEmail" placeholder="Enter recipient's email" type="email" required />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Gift'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="merchant">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Store className="w-5 h-5 mr-2" aria-hidden="true" style={{color: '#D0BFB4'}} />Create Merchant Account</CardTitle>
+              <CardDescription>Set up your merchant account to start selling.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'merchant')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantName">Merchant Name</Label>
+                    <Input id="merchantName" name="merchantName" placeholder="Enter merchant name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantEmail">Merchant Email</Label>
+                    <Input id="merchantEmail" name="merchantEmail" placeholder="Enter merchant email" type="email" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantDescription">Business Description</Label>
+                    <Textarea id="merchantDescription" name="merchantDescription" placeholder="Describe your business" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantWallet">Solana Wallet Address</Label>
+                    <Input id="merchantWallet" name="merchantWallet" placeholder="Enter your Solana wallet address" required />
+                  </div>
+                </div>
+                <Alert className="mt-4">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" style={{color: '#D0BFB4'}} />
+                  <AlertTitle>Merchant Program Fee</AlertTitle>
+                  <AlertDescription>
+                    There is a one-time fee of 0.15 SOL to create a merchant account.
+                  </AlertDescription>
+                </Alert>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Merchant Account'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -1,65 +1,65 @@
 'use client'
 
-import React from 'react'
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
+import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
 }
 
-interface ErrorBoundaryState {
-  hasError: boolean
-}
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
+  const router = useRouter()
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props)
-    this.state = { hasError: false }
-  }
+  useEffect(() => {
+    // Log the error to an error reporting service
+    console.error('ErrorBoundary caught an error:', error)
+  }, [error])
 
-  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-          <h2 className="text-2xl font-bold mb-4">Oops, there was an error!</h2>
-          <p className="mb-4 text-center max-w-md">
-            We're sorry, but something went wrong. Our team has been notified and we're working to fix it.
-          </p>
-          <Button
-            onClick={() => {
-              this.setState({ hasError: false })
-              window.location.reload()
-            }}
-          >
-            Try again
-          </Button>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+      <h2 className="text-2xl font-bold mb-4">Oops, there was an error!</h2>
+      <p className="mb-4 text-center max-w-md">
+        We're sorry, but something went wrong. Our team has been notified and we're working to fix it.
+      </p>
+      <div className="flex space-x-4">
+        <Button onClick={resetErrorBoundary}>
+          Try again
+        </Button>
+        <Button variant="outline" onClick={() => router.push('/')}>
+          Go to Home
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 export default function ErrorBoundaryWrapper({ children }: ErrorBoundaryProps) {
   useEffect(() => {
-    window.onerror = (message, source, lineno, colno, error) => {
-      console.error('Global error caught:', error)
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error caught:', event.error)
     }
 
+    window.addEventListener('error', handleError)
+
     return () => {
-      window.onerror = null
+      window.removeEventListener('error', handleError)
     }
   }, [])
 
-  return <ErrorBoundary>{children}</ErrorBoundary>
+  return (
+    <ReactErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        // Reset the state of your app here
+      }}
+      onError={(error, info) => {
+        // Log the error to an error reporting service
+        console.error('ErrorBoundary caught an error:', error, info)
+      }}
+    >
+      {children}
+    </ReactErrorBoundary>
+  )
 }

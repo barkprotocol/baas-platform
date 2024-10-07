@@ -10,11 +10,11 @@ import { Footer } from "@/components/ui/layout/footer"
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-#f0f0f0 text-foreground">
+    <>
       <Header />
       <main className="flex-1">
         <Hero />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 py-24">
           <Features />
           <About />
           <Pricing />
@@ -24,6 +24,6 @@ export default function LandingPage() {
         </div>
       </main>
       <Footer />
-    </div>
+    </>
   )
 }

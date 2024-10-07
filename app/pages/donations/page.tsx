@@ -1,21 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { createQR, encodeURL, TransferRequestURLFields, findReference, validateTransfer, FindReferenceError, ValidateTransferError } from "@solana/pay"
+import { PublicKey, Keypair } from "@solana/web3.js"
+import { useConnection } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { ArrowLeft, Heart, DollarSign, AlertCircle, Copy, CheckCircle, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Heart, DollarSign, AlertCircle, Copy, CheckCircle, RefreshCw, Info } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Mock API functions (replace with actual API calls)
 const submitDonation = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: 'mock-tx-id' }), 1000));
@@ -31,7 +35,7 @@ const fetchRecentDonations = async (page: number) => new Promise(resolve => setT
 }), 1000));
 
 // Example donation addresses (use environment variables in a real application)
-const DONATION_ADDRESSES = {
+const DONATION_ADDRESSES: Record<string, string> = {
   'Disaster Relief Fund': process.env.NEXT_PUBLIC_DISASTER_RELIEF_ADDRESS || 'BARK_DISASTER_RELIEF_ADDRESS',
   'Education for All': process.env.NEXT_PUBLIC_EDUCATION_ADDRESS || 'BARK_EDUCATION_ADDRESS',
   'Clean Water Initiative': process.env.NEXT_PUBLIC_CLEAN_WATER_ADDRESS || 'BARK_CLEAN_WATER_ADDRESS',
@@ -42,26 +46,38 @@ const DONATION_ADDRESSES = {
 const DONATION_GOAL = 100000;
 
 // Currency icons
-const CURRENCY_ICONS = {
+const CURRENCY_ICONS: Record<string, string> = {
   BARK: '/assets/icons/bark.png',
   SOL: '/assets/icons/sol.png',
   USDC: '/assets/icons/usdc.png',
 };
 
+interface Donation {
+  id: number;
+  amount: number;
+  currency: string;
+  donor: string;
+  date: string;
+  recipient: string;
+}
+
 export default function DonationsPage() {
   const router = useRouter()
+  const { connection } = useConnection()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [donationAmount, setDonationAmount] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState('')
   const [selectedRecipient, setSelectedRecipient] = useState('Disaster Relief Fund')
   const [copiedAddress, setCopiedAddress] = useState(false)
-  const [recentDonations, setRecentDonations] = useState<any[]>([])
+  const [recentDonations, setRecentDonations] = useState<Donation[]>([])
   const [currentPage, setCurrentPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [totalDonations, setTotalDonations] = useState(0)
   const [isRecurring, setIsRecurring] = useState(false)
+  const [anonymousDonation, setAnonymousDonation] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
 
   useEffect(() => {
     loadMoreDonations()
@@ -76,7 +92,8 @@ export default function DonationsPage() {
         amount: donationAmount, 
         currency: selectedCurrency, 
         recurring: isRecurring,
-        recipient: selectedRecipient
+        recipient: selectedRecipient,
+        anonymous: anonymousDonation
       })
       if (result.success) {
         toast({
@@ -86,6 +103,7 @@ export default function DonationsPage() {
         setDonationAmount('')
         setSelectedCurrency('')
         setIsRecurring(false)
+        setAnonymousDonation(false)
         setTotalDonations(prev => prev + parseFloat(donationAmount))
         loadMoreDonations(true)
       } else {
@@ -106,7 +124,7 @@ export default function DonationsPage() {
     router.push('/')
   }
 
-  const copyToClipboard = () => {
+  const copyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(DONATION_ADDRESSES[selectedRecipient]).then(() => {
       setCopiedAddress(true)
       toast({
@@ -115,9 +133,9 @@ export default function DonationsPage() {
       })
       setTimeout(() => setCopiedAddress(false), 3000)
     })
-  }
+  }, [selectedRecipient, toast])
 
-  const loadMoreDonations = async (refresh = false) => {
+  const loadMoreDonations = useCallback(async (refresh = false) => {
     if (isLoading) return
     setIsLoading(true)
     try {
@@ -134,7 +152,82 @@ export default function DonationsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [currentPage, isLoading, toast])
+
+  const generateQrCode = useCallback(async () => {
+    if (!selectedRecipient || !donationAmount) {
+      toast({
+        title: "Error",
+        description: "Please select a recipient and enter an amount.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const recipientAddress = new PublicKey(DONATION_ADDRESSES[selectedRecipient])
+    const amount = Number(donationAmount)
+    const reference = new Keypair().publicKey
+    const label = `Donation to ${selectedRecipient}`
+    const message = `Thank you for your donation of ${amount} SOL to ${selectedRecipient}`
+
+    const urlParams: TransferRequestURLFields = {
+      recipient: recipientAddress,
+      amount,
+      splToken: undefined,
+      reference,
+      label,
+      message,
+    }
+
+    const url = encodeURL(urlParams)
+    const qr = createQR(url)
+    const qrCodeDataUrl = await qr.getRawData('svg')
+    setQrCode(qrCodeDataUrl as string)
+
+    // Start checking for transaction
+    checkForTransaction(reference, amount, recipientAddress)
+  }, [selectedRecipient, donationAmount, toast])
+
+  const checkForTransaction = useCallback(async (reference: PublicKey, amount: number, recipient: PublicKey) => {
+    try {
+      const signatureInfo = await findReference(connection, reference, { finality: 'confirmed' })
+      await validateTransfer(
+        connection,
+        signatureInfo.signature,
+        {
+          recipient,
+          amount,
+          splToken: undefined,
+          reference,
+        },
+        { commitment: 'confirmed' }
+      )
+      toast({
+        title: "Donation Successful",
+        description: `Thank you for your donation of ${amount} SOL. Transaction signature: ${signatureInfo.signature}`,
+      })
+      setQrCode(null)
+      loadMoreDonations(true)
+    } catch (error) {
+      if (error instanceof FindReferenceError) {
+        // No transaction found yet, try again
+        setTimeout(() => checkForTransaction(reference, amount, recipient), 5000)
+      } else if (error instanceof ValidateTransferError) {
+        toast({
+          title: "Error",
+          description: "Transfer could not be validated. Please try again.",
+          variant: "destructive",
+        })
+      } else {
+        console.error(error)
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
+  }, [connection, toast, loadMoreDonations])
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -164,9 +257,10 @@ export default function DonationsPage() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="form">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="form">Donation Form</TabsTrigger>
                 <TabsTrigger value="address">Address</TabsTrigger>
+                <TabsTrigger value="qr">QR Code</TabsTrigger>
               </TabsList>
               <TabsContent value="form">
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -202,22 +296,12 @@ export default function DonationsPage() {
                   <div className="space-y-2">
                     <Label>Donation Recipient</Label>
                     <RadioGroup defaultValue="Disaster Relief Fund" onValueChange={setSelectedRecipient}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Disaster Relief Fund" id="disaster-relief" />
-                        <Label htmlFor="disaster-relief">Disaster Relief Fund</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Education for All" id="education" />
-                        <Label htmlFor="education">Education for All</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Clean Water Initiative" id="clean-water" />
-                        <Label htmlFor="clean-water">Clean Water Initiative</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Support BARK Protocol" id="bark-protocol" />
-                        <Label htmlFor="bark-protocol">Support BARK Protocol</Label>
-                      </div>
+                      {Object.keys(DONATION_ADDRESSES).map((recipient) => (
+                        <div key={recipient} className="flex items-center space-x-2">
+                          <RadioGroupItem value={recipient} id={recipient.toLowerCase().replace(/\s+/g, '-')} />
+                          <Label htmlFor={recipient.toLowerCase().replace(/\s+/g, '-')}>{recipient}</Label>
+                        </div>
+                      ))}
                     </RadioGroup>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -228,8 +312,16 @@ export default function DonationsPage() {
                     />
                     <Label htmlFor="recurring">Make this a monthly recurring donation</Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="anonymous"
+                      checked={anonymousDonation}
+                      onCheckedChange={setAnonymousDonation}
+                    />
+                    <Label htmlFor="anonymous">Make this an anonymous donation</Label>
+                  </div>
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? 'Processing...' : 'Donate'}
+                    {isSubmitting ? 'Processing...' :  'Donate'}
                   </Button>
                 </form>
               </TabsContent>
@@ -252,9 +344,18 @@ export default function DonationsPage() {
                     <Label htmlFor="donation-address">Donation Address</Label>
                     <div className="flex items-center space-x-2">
                       <Input id="donation-address" value={DONATION_ADDRESSES[selectedRecipient]} readOnly />
-                      <Button variant="outline" size="icon" onClick={copyToClipboard} aria-label="Copy donation address">
-                        {copiedAddress ? <CheckCircle className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" /> : <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />}
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" onClick={copyToClipboard} aria-label="Copy donation address">
+                              {copiedAddress ? <CheckCircle className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" /> : <Copy className="h-4 w-4" style={{color: '#D0BFB4'}} aria-hidden="true" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{copiedAddress ? 'Copied!' : 'Copy address'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                   <Alert>
@@ -263,6 +364,40 @@ export default function DonationsPage() {
                       Send your donations directly to this address. Make sure to use the correct network for your transaction.
                     </AlertDescription>
                   </Alert>
+                </div>
+              </TabsContent>
+              <TabsContent value="qr">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="qr-amount">Donation Amount (SOL)</Label>
+                    <Input
+                      id="qr-amount"
+                      type="number"
+                      placeholder="Enter amount in SOL"
+                      value={donationAmount}
+                      onChange={(e) => setDonationAmount(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="qr-recipient">Select Donation Recipient</Label>
+                    <Select value={selectedRecipient} onValueChange={setSelectedRecipient}>
+                      <SelectTrigger id="qr-recipient">
+                        <SelectValue placeholder="Select recipient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(DONATION_ADDRESSES).map((recipient) => (
+                          <SelectItem key={recipient} value={recipient}>{recipient}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={generateQrCode} className="w-full">Generate QR Code</Button>
+                  {qrCode && (
+                    <div className="mt-4">
+                      <Image src={qrCode} alt="Donation QR Code" width={200} height={200} />
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -287,11 +422,11 @@ export default function DonationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>Donor</TableHead>
-                  <TableHead>Recipient</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Currency</TableCell>
+                  <TableCell>Donor</TableCell>
+                  <TableCell>Recipient</TableCell>
+                  <TableCell>Date</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -333,6 +468,31 @@ export default function DonationsPage() {
           All donations are processed securely using blockchain technology. Your support helps us make a difference in various charitable causes and maintain the BARK Protocol. For large donations or special arrangements, please contact our team directly.
         </AlertDescription>
       </Alert>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Info className="w-5 h-5 mr-2" style={{color: '#D0BFB4'}} aria-hidden="true" />
+            Donation FAQ
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold">How are my donations used?</h3>
+              <p>Your donations directly support our various charitable initiatives and the maintenance of the BARK Protocol.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">Are my donations tax-deductible?</h3>
+              <p>Please consult with a tax professional regarding the tax-deductibility of your donations.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">Can I cancel a recurring donation?</h3>
+              <p>Yes, you can cancel a recurring donation at any time by contacting our support team.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

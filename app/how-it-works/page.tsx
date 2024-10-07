@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Zap, Code, Shield, Coins, PlusCircle, Landmark, BarChart2, Lock, Globe, Gift, ShoppingCart, MessageSquare } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,30 @@ import Link from 'next/link'
 
 const iconColor = "#D0BFB4"
 
-const steps = [
+interface Step {
+  title: string;
+  description: string;
+  icon: JSX.Element;
+}
+
+interface Feature {
+  title: string;
+  description: string;
+  icon: JSX.Element;
+}
+
+interface UseCase {
+  title: string;
+  description: string;
+  icon: JSX.Element;
+}
+
+interface FAQ {
+  question: string;
+  answer: string;
+}
+
+const steps: Step[] = [
   {
     title: "Connect Your Wallet",
     description: "Start by connecting your Solana wallet to the BARK BaaS Platform.",
@@ -39,7 +62,7 @@ const steps = [
   },
 ]
 
-const features = [
+const features: Feature[] = [
   {
     title: "Instant Payments",
     description: "Process payments in seconds with minimal fees using Solana's high-speed network.",
@@ -72,7 +95,7 @@ const features = [
   },
 ]
 
-const useCases = [
+const useCases: UseCase[] = [
   {
     title: "DeFi Applications",
     description: "Build decentralized finance applications like lending platforms or decentralized exchanges.",
@@ -105,7 +128,7 @@ const useCases = [
   },
 ]
 
-const faqs = [
+const faqs: FAQ[] = [
   {
     question: "What blockchain does BARK BaaS use?",
     answer: "BARK BaaS primarily uses the Solana blockchain for its high speed and low transaction costs.",
@@ -123,6 +146,11 @@ const faqs = [
 export default function HowItWorksPage() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
+  const memoizedSteps = useMemo(() => steps, [])
+  const memoizedFeatures = useMemo(() => features, [])
+  const memoizedUseCases = useMemo(() => useCases, [])
+  const memoizedFAQs = useMemo(() => faqs, [])
+
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold text-center mb-8">How BARK BaaS Works</h1>
@@ -133,7 +161,7 @@ export default function HowItWorksPage() {
         </p>
         
         <div className="space-y-8">
-          {steps.map((step, index) => (
+          {memoizedSteps.map((step, index) => (
             <Card key={index}>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -153,8 +181,8 @@ export default function HowItWorksPage() {
 
       <h2 className="text-3xl font-bold text-center mb-8">Key Features</h2>
       
-      <div className="grid gap-8 md:grid-cols-3 mb-16">
-        {features.map((feature, index) => (
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
+        {memoizedFeatures.map((feature, index) => (
           <motion.div
             key={index}
             className="relative"
@@ -191,17 +219,15 @@ export default function HowItWorksPage() {
       <h2 className="text-3xl font-bold text-center mb-8">Use Cases</h2>
       
       <Tabs defaultValue="defi" className="w-full max-w-3xl mx-auto mb-16">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 mb-4">
           <TabsTrigger value="defi">DeFi</TabsTrigger>
           <TabsTrigger value="gaming">Gaming</TabsTrigger>
           <TabsTrigger value="supply-chain">Supply Chain</TabsTrigger>
-        </TabsList>
-        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="donations">Donations</TabsTrigger>
           <TabsTrigger value="commerce">Commerce</TabsTrigger>
           <TabsTrigger value="solana-blinks">Solana Blinks</TabsTrigger>
         </TabsList>
-        {useCases.map((useCase, index) => (
+        {memoizedUseCases.map((useCase, index) => (
           <TabsContent key={index} value={useCase.title.toLowerCase().replace(/\s+/g, '-')}>
             <Card>
               <CardHeader>
@@ -221,7 +247,7 @@ export default function HowItWorksPage() {
       <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
       
       <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto mb-16">
-        {faqs.map((faq, index) => (
+        {memoizedFAQs.map((faq, index) => (
           <AccordionItem key={index} value={`item-${index}`}>
             <AccordionTrigger>{faq.question}</AccordionTrigger>
             <AccordionContent>{faq.answer}</AccordionContent>
