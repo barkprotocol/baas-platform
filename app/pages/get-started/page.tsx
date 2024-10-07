@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, ArrowLeft, Check, RefreshCcw, Zap, Coins, CreditCard, PlusCircle, Landmark, Gift, Store, ArrowRightLeft, Gem, Users } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, RefreshCcw, Zap, Coins, CreditCard, PlusCircle, Landmark, Gift, Store, ArrowRightLeft, Gem, Users, Rocket, Vote, Award } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { WalletButton } from "@/components/ui/wallet-button"
@@ -22,7 +22,10 @@ import { SwapForm } from '@/components/get-started/swap-form'
 import { StakingForm } from '@/components/get-started/staking-form'
 import { MembershipForm } from '@/components/get-started/membership-form'
 import { TieredTokenForm } from '@/components/get-started/tiered-token-form'
-import { createBlink, processDonation, makePayment, mintNFT, startCrowdfunding, sendGift, createMerchant, performSwap, stakeTokens, createMembership, createTieredToken } from '@/app/actions/solana/solana'
+import { AirdropForm } from '@/components/get-started/airdrop-form'
+import { GovernanceForm } from '@/components/get-started/governance-form'
+import { RewardsForm } from '@/components/get-started/rewards-form'
+import { createBlink, processDonation, makePayment, mintNFT, startCrowdfunding, sendGift, createMerchant, performSwap, stakeTokens, createMembership, createTieredToken, createAirdrop, createGovernanceProposal, distributeRewards } from '@/app/actions/solana/solana'
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Tier {
@@ -154,6 +157,15 @@ export default function GetStartedPage() {
         case 'tieredToken':
           result = await createTieredToken(data)
           break
+        case 'airdrop':
+          result = await createAirdrop(data)
+          break
+        case 'governance':
+          result = await createGovernanceProposal(data)
+          break
+        case 'rewards':
+          result = await distributeRewards(data)
+          break
         default:
           throw new Error('Invalid action')
       }
@@ -205,9 +217,29 @@ export default function GetStartedPage() {
       case 'gift': return <Gift className="w-4 h-4 mr-2" />
       case 'merchant': return <Store className="w-4 h-4 mr-2" />
       case 'membership': return <Users className="w-4 h-4 mr-2" />
+      case 'airdrop': return <Rocket className="w-4 h-4 mr-2" />
+      case 'governance': return <Vote className="w-4 h-4 mr-2" />
+      case 'rewards': return <Award className="w-4 h-4 mr-2" />
       default: return null
     }
   }
+
+  const availableTabs = useMemo(() => {
+    const basicTabs = ['blink', 'donations', 'payments', 'swap'];
+    const proTabs = [...basicTabs, 'nft', 'airdrop', 'governance', 'rewards'];
+    const enterpriseTabs = [...proTabs, 'crowdfunding', 'staking', 'tieredToken', 'gift', 'merchant', 'membership'];
+
+    switch (selectedTier) {
+      case 'Basic':
+        return basicTabs;
+      case 'Pro':
+        return proTabs;
+      case 'Enterprise':
+        return enterpriseTabs;
+      default:
+        return [];
+    }
+  }, [selectedTier]);
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -282,12 +314,12 @@ export default function GetStartedPage() {
         
         <TabsList className="flex flex-wrap justify-start gap-2 mb-6">
           <TabsTrigger value="tiers" className="flex-grow sm:flex-grow-0">Select Tier</TabsTrigger>
-          {['blink', 'donations', 'payments', 'swap', 'nft', 'crowdfunding', 'staking', 'tieredToken', 'gift', 'merchant', 'membership'].map((tab) => (
+          {availableTabs.map((tab) => (
             <TabsTrigger 
               key={tab}
               value={tab} 
               className="flex-grow sm:flex-grow-0" 
-              disabled={!selectedTier || (selectedTier === "Basic" && ['nft', 'crowdfunding', 'staking', 'tieredToken'].includes(tab)) || (selectedTier !== "Enterprise" && ['gift', 'merchant', 'membership'].includes(tab))}
+              disabled={!selectedTier}
             >
               {renderTabIcon(tab)}
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -314,6 +346,9 @@ export default function GetStartedPage() {
                 {activeTab === 'gift' && "Spread joy with digital gifts."}
                 {activeTab === 'merchant' && "Set up your merchant account to start selling."}
                 {activeTab === 'membership' && "Set up a membership program for your organization."}
+                {activeTab === 'airdrop' && "Distribute tokens to multiple addresses simultaneously."}
+                {activeTab === 'governance' && "Create and manage governance proposals."}
+                {activeTab === 'rewards' && "Set up and distribute rewards to your community."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -328,6 +363,9 @@ export default function GetStartedPage() {
               {activeTab === 'gift' && <GiftForm onSubmit={(data) => handleSubmit('gift', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
               {activeTab === 'merchant' && <MerchantForm onSubmit={(data) => handleConfirmation('merchant')} isLoading={isLoading} isWalletConnected={connected} />}
               {activeTab === 'membership' && <MembershipForm onSubmit={(data) => handleConfirmation('membership')} isLoading={isLoading} isWalletConnected={connected} />}
+              {activeTab === 'airdrop' && <AirdropForm onSubmit={(data) => handleSubmit('airdrop', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              {activeTab === 'governance' && <GovernanceForm onSubmit={(data) => handleSubmit('governance', data)} isLoading={isLoading} isWalletConnected={connected} />}
+              {activeTab === 'rewards' && <RewardsForm onSubmit={(data) => handleSubmit('rewards', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
             </CardContent>
           </Card>
         )}
