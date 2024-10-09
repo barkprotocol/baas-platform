@@ -3,13 +3,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Zap, Coins, Code, Gift, Repeat, Paintbrush, ArrowRight, Search, ArrowLeft } from 'lucide-react'
+import { ChevronRight, Zap, Coins, Code, Gift, Repeat, Paintbrush, ArrowRight, Search, ArrowLeft, Moon, Sun, Info } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
 
 const iconColor = "#d0bfb4"
 
@@ -23,7 +28,8 @@ const services = [
       "Customizable Blinks for various use cases",
       "Seamless integration with BARK Protocol ecosystem",
       "Real-time transaction monitoring"
-    ]
+    ],
+    status: 'active'
   },
   {
     title: "API & SDK",
@@ -34,7 +40,8 @@ const services = [
       "SDK support for multiple programming languages",
       "Extensive documentation and code samples",
       "Webhooks for real-time event notifications"
-    ]
+    ],
+    status: 'beta'
   },
   {
     title: "DeFi Solutions",
@@ -45,7 +52,8 @@ const services = [
       "Decentralized lending and borrowing",
       "Automated market making (AMM)",
       "Cross-chain DeFi integrations"
-    ]
+    ],
+    status: 'active'
   },
   {
     title: "Social Finance",
@@ -56,7 +64,8 @@ const services = [
       "Social tokens and creator economies",
       "Decentralized reputation systems",
       "Community-driven fundraising"
-    ]
+    ],
+    status: 'coming soon'
   },
   {
     title: "Donations & Crowdfunding",
@@ -67,7 +76,8 @@ const services = [
       "Smart contract-based crowdfunding campaigns",
       "Automated fund distribution",
       "Integration with existing donation platforms"
-    ]
+    ],
+    status: 'active'
   },
   {
     title: "Token Swap",
@@ -78,7 +88,8 @@ const services = [
       "Automated price discovery and liquidity",
       "Cross-chain token swaps",
       "Integration with Jupiter Terminal API"
-    ]
+    ],
+    status: 'active'
   },
   {
     title: "NFT Services",
@@ -89,7 +100,8 @@ const services = [
       "Marketplace development and integration",
       "Royalty management for creators",
       "NFT-based loyalty and reward programs"
-    ]
+    ],
+    status: 'beta'
   }
 ]
 
@@ -97,6 +109,7 @@ export default function ServicesPage() {
   const [activeTab, setActiveTab] = useState("actions-&-blinks")
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredServices, setFilteredServices] = useState(services)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const { toast } = useToast()
 
   const handleSearch = useCallback((term: string) => {
@@ -124,23 +137,48 @@ export default function ServicesPage() {
     handleSearch(searchTerm)
   }, [searchTerm, handleSearch])
 
+  useEffect(() => {
+    document.body.classList.toggle('dark', isDarkMode)
+  }, [isDarkMode])
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode)
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-sand-50 dark:bg-sand-900">
+    <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-sand-900 text-sand-100' : 'bg-sand-50 text-sand-900'}`}>
       <main className="flex-grow container mx-auto px-4 py-12">
-        <Button variant="ghost" asChild className="mb-6">
-          <Link href="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Main
-          </Link>
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button variant="ghost" asChild className="mb-6">
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Main
+            </Link>
+          </Button>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="dark-mode"
+              checked={isDarkMode}
+              onCheckedChange={toggleDarkMode}
+            />
+            <Label htmlFor="dark-mode" className="sr-only">
+              Toggle dark mode
+            </Label>
+            {isDarkMode ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl sm:text-5xl font-bold text-sand-800 dark:text-sand-100 mb-8 text-center">Our Services</h1>
-          <p className="text-lg sm:text-xl text-sand-600 dark:text-sand-300 mb-12 text-center max-w-3xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-center">Our Services</h1>
+          <p className="text-lg sm:text-xl mb-12 text-center max-w-3xl mx-auto">
             Explore the wide range of blockchain services offered by BARK BaaS, powered by Solana technology.
           </p>
         </motion.div>
@@ -158,7 +196,7 @@ export default function ServicesPage() {
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-sand-800 border-sand-200 dark:border-sand-700 focus:border-sand-400 dark:focus:border-sand-500"
+              className={`pl-10 ${isDarkMode ? 'bg-sand-800 border-sand-700' : 'bg-white border-sand-200'} focus:border-sand-400`}
               aria-label="Search services"
             />
           </div>
@@ -166,12 +204,16 @@ export default function ServicesPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <ScrollArea className="w-full mb-6">
-            <TabsList className="flex justify-start p-1 bg-sand-100 dark:bg-sand-800 rounded-lg">
+            <TabsList className={`flex justify-center p-1 rounded-lg ${isDarkMode ? 'bg-sand-800' : 'bg-sand-100'}`}>
               {filteredServices.map((service, index) => (
                 <TabsTrigger
                   key={index}
                   value={service.title.toLowerCase().replace(/\s+/g, '-')}
-                  className="px-4 py-2 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-sand-700 data-[state=active]:text-sand-900 dark:data-[state=active]:text-sand-100 whitespace-nowrap"
+                  className={`px-4 py-2 rounded-md whitespace-nowrap ${
+                    isDarkMode
+                      ? 'data-[state=active]:bg-sand-700 data-[state=active]:text-sand-100'
+                      : 'data-[state=active]:bg-white data-[state=active]:text-sand-900'
+                  }`}
                 >
                   {service.title}
                 </TabsTrigger>
@@ -190,13 +232,24 @@ export default function ServicesPage() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="bg-white dark:bg-sand-800 mt-4 shadow-lg">
+                  <Card className={`mt-4 shadow-lg ${isDarkMode ? 'bg-sand-800' : 'bg-white'}`}>
                     <CardHeader>
-                      <div className="flex items-center space-x-4">
-                        <service.icon className="w-8 h-8" style={{ color: iconColor }} aria-hidden="true" />
-                        <CardTitle className="text-2xl font-bold text-sand-800 dark:text-sand-100">{service.title}</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <service.icon className="w-8 h-8" style={{ color: iconColor }} aria-hidden="true" />
+                          <CardTitle className="text-2xl font-bold">{service.title}</CardTitle>
+                        </div>
+                        <Badge 
+                          variant={
+                            service.status === 'active' ? 'default' : 
+                            service.status === 'beta' ? 'secondary' : 
+                            'outline'
+                          }
+                        >
+                          {service.status}
+                        </Badge>
                       </div>
-                      <CardDescription className="text-sand-600 dark:text-sand-300 mt-2">{service.description}</CardDescription>
+                      <CardDescription className={`mt-2 ${isDarkMode ? 'text-sand-300' : 'text-sand-600'}`}>{service.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2" aria-label={`Features of ${service.title}`}>
@@ -206,19 +259,51 @@ export default function ServicesPage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: featureIndex * 0.1 }}
-                            className="flex items-center space-x-2 text-sand-700 dark:text-sand-200"
+                            className={`flex items-center space-x-2 ${isDarkMode ? 'text-sand-200' : 'text-sand-700'}`}
                           >
-                            <ChevronRight className="w-4 h-4 text-sand-500 dark:text-sand-400 flex-shrink-0" aria-hidden="true" />
+                            <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isDarkMode ? 'text-sand-400' : 'text-sand-500'}`} aria-hidden="true" />
                             <span>{feature}</span>
                           </motion.li>
                         ))}
                       </ul>
                     </CardContent>
                     <CardFooter>
-                      <Button className="w-full mt-4 bg-sand-600 hover:bg-sand-700 text-white">
-                        Learn More
-                        <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button className="w-full mt-4 bg-sand-600 hover:bg-sand-700 text-white">
+                                  Learn More
+                                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className={isDarkMode ? 'bg-sand-800 text-sand-100' : 'bg-white text-sand-900'}>
+                                <DialogHeader>
+                                  <DialogTitle>{service.title}</DialogTitle>
+                                  <DialogDescription>
+                                    {service.description}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="mt-4">
+                                  <h3 className="text-lg font-semibold mb-2">Key Features:</h3>
+                                  <ul className="list-disc pl-5 space-y-1">
+                                    {service.features.map((feature, index) => (
+                                      <li key={index}>{feature}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                <div className="mt-4">
+                                  <p>For more information or to get started with {service.title}, please contact our sales team.</p>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </TooltipTrigger>
+                          <TooltipContent className={isDarkMode ? 'bg-sand-700 text-sand-100' : 'bg-sand-100 text-sand-900'}>
+                            Click to learn more about {service.title}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </CardFooter>
                   </Card>
                 </motion.div>
@@ -226,13 +311,26 @@ export default function ServicesPage() {
             ))}
           </AnimatePresence>
         </Tabs>
+
+        {filteredServices.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mt-8"
+          >
+            <p className={`text-xl ${isDarkMode ? 'text-sand-400' : 'text-sand-600'}`}>
+              No services found matching your search.
+            </p>
+          </motion.div>
+        )}
       </main>
 
-      <footer className="bg-sand-100 dark:bg-sand-800 py-8">
+      <footer className={`py-8 ${isDarkMode ? 'bg-sand-800' : 'bg-sand-100'}`}>
         <div className="container mx-auto px-4">
           <div className="flex justify-center items-center">
-            <p className="text-sand-600 dark:text-sand-300 text-sm">
-              © {new Date().getFullYear()} BARK BaaS. All rights reserved.
+            <p className={`text-sm ${isDarkMode ? 'text-sand-300' : 'text-sand-600'}`}>
+              Powered by Solana
             </p>
           </div>
         </div>
