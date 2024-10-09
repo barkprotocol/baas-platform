@@ -4,17 +4,21 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
 import Image from 'next/image'
+import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Zap, Shield, Coins, FileCode, BarChart2, Share2, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Zap, Shield, Coins, FileCode, BarChart2, Share2, CheckCircle, Clock, Circle, Mail } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Mock API call for form submission
+// API call for form submission
 const submitContactForm = async (data: any) => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
 
 export default function AboutPage() {
@@ -52,12 +56,12 @@ export default function AboutPage() {
   }
 
   const features = [
-    { title: "Easy Integration", description: "Seamlessly integrate blockchain into your existing systems", icon: <Zap className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-    { title: "Secure Transactions", description: "Ensure the safety and integrity of all your transactions", icon: <Shield className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-    { title: "Multi-Currency Support", description: "Handle various cryptocurrencies with ease", icon: <Coins className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-    { title: "Smart Contract Management", description: "Create, deploy, and manage smart contracts effortlessly", icon: <FileCode className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-    { title: "Real-time Analytics", description: "Gain insights with our powerful analytics tools", icon: <BarChart2 className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> },
-    { title: "Solana Blinks", description: "Perform transactions on social media platforms through Dialect", icon: <Share2 className="h-8 w-8 mb-4" style={{color: '#D0BFB4'}} /> }
+    { title: "Easy Integration", description: "Seamlessly integrate blockchain into your existing systems", icon: <Zap className="h-8 w-8 mb-4" /> },
+    { title: "Secure Transactions", description: "Ensure the safety and integrity of all your transactions", icon: <Shield className="h-8 w-8 mb-4" /> },
+    { title: "Multi-Currency Support", description: "Handle various cryptocurrencies with ease", icon: <Coins className="h-8 w-8 mb-4" /> },
+    { title: "Smart Contract Management", description: "Create, deploy, and manage smart contracts effortlessly", icon: <FileCode className="h-8 w-8 mb-4" /> },
+    { title: "Real-time Analytics", description: "Gain insights with our powerful analytics tools", icon: <BarChart2 className="h-8 w-8 mb-4" /> },
+    { title: "Solana Blinks", description: "Perform transactions on social media platforms through Dialect", icon: <Share2 className="h-8 w-8 mb-4" /> }
   ]
 
   const faqs = [
@@ -80,37 +84,95 @@ export default function AboutPage() {
     {
       question: "How do Solana Blinks work with social media platforms?",
       answer: "Solana Blinks allow you to perform blockchain transactions directly through various social media platforms. By integrating with Dialect, we enable users to initiate and confirm transactions using simple commands within their social media interactions, all secured and processed on the Solana blockchain."
+    },
+    {
+      question: "What is Blinkboard?",
+      answer: "Blinkboard is our innovative dashboard that provides a comprehensive overview of your Solana Blinks activities. It offers real-time tracking of transactions, analytics on usage patterns, and insights to help optimize your blockchain interactions across social media platforms."
     }
   ]
 
   const partners = [
     { name: "Solana", logo: "/placeholder.svg?height=100&width=100" },
     { name: "Dialect", logo: "/placeholder.svg?height=100&width=100" },
-    { name: "USDC", logo: "/placeholder.svg?height=100&width=100" },
-    { name: "Phantom", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "Meteora", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "Circle", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "Jupiter", logo: "/placeholder.svg?height=100&width=100" },
+    { name: "Helius", logo: "/placeholder.svg?height=100&width=100" },
+  ]
+
+  const roadmap = [
+    {
+      phase: "Phase 1: Foundation",
+      timeline: "Q2 2024",
+      milestones: [
+        { title: "BARK Token Launch", status: "completed" },
+        { title: "Solana Blink Prototype", status: "completed" },
+        { title: "Initial Partnership Agreements", status: "completed" },
+      ]
+    },
+    {
+      phase: "Phase 2: Core Development",
+      timeline: "Q2-Q3 2024",
+      milestones: [
+        { title: "BARK BaaS Platform Alpha Release", status: "in-progress" },
+        { title: "Integration with Major Social Media Platforms", status: "in-progress" },
+        { title: "Smart Contract Templates Library", status: "planned" },
+        { title: "Blinkboard Beta Launch", status: "in-progress" },
+      ]
+    },
+    {
+      phase: "Phase 3: Expansion",
+      timeline: "Q3-Q4 2024",
+      milestones: [
+        { title: "BARK BaaS Platform Beta Release", status: "planned" },
+        { title: "Cross-chain Interoperability Features", status: "planned" },
+        { title: "Advanced Analytics Dashboard", status: "planned" },
+        { title: "Blinkboard Full Release", status: "planned" },
+      ]
+    },
+    {
+      phase: "Phase 4: Enterprise Solutions",
+      timeline: "Q2-Q4 2025",
+      milestones: [
+        { title: "Enterprise-grade Security Enhancements", status: "planned" },
+        { title: "Industry-specific BaaS Solutions", status: "planned" },
+        { title: "Global Expansion and Localization", status: "planned" },
+        { title: "Blinkboard Enterprise Features", status: "planned" },
+      ]
+    }
   ]
 
   return (
     <>
       <Head>
-        <title>About BARK BaaS Platform</title>
-        <meta name="description" content="Learn about the BARK BaaS Platform, our mission, key features, and how we're revolutionizing blockchain technology for businesses." />
+        <title>About Blockchain As A Service Platform</title>
+        <meta name="description" content="Learn about the BARK BaaS Platform, our mission, key features, and how we're revolutionizing Solana blockchain technology for businesses." />
       </Head>
       <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <Button onClick={() => router.push('/')} variant="outline" className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" style={{color: '#D0BFB4'}} /> Back to Main
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Main
         </Button>
 
-        <div className="text-center mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
           <h1 className="text-4xl font-bold mb-4">About BARK BaaS Platform</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Empowering businesses with cutting-edge blockchain technology, simplified.
           </p>
-        </div>
+        </motion.div>
 
-        <section className="mb-16">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-16"
+        >
           <h2 className="text-3xl font-semibold mb-8 text-center">Our Mission</h2>
-          <Card className="bg-gradient-to-br from-[#F5E6D3] to-[#E6D2B5]">
+          <Card className="bg-gradient-to-br from-card to-background">
             <CardContent className="p-8">
               <p className="text-lg mb-4">
                 At BARK BaaS (Blockchain-as-a-Service) Platform, we're on a mission to democratize blockchain technology. 
@@ -123,86 +185,155 @@ export default function AboutPage() {
               </p>
             </CardContent>
           </Card>
-        </section>
+        </motion.section>
 
-        <section className="mb-16">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mb-16"
+        >
           <h2 className="text-3xl font-semibold mb-8 text-center">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
-                <CardContent className="p-6">
-                  {feature.icon}
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p>{feature.description}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 * index }}
+              >
+                <Card className="text-center hover:shadow-lg transition-shadow duration-300 h-full">
+                  <CardContent className="p-6 flex flex-col h-full">
+                    {feature.icon}
+                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-muted-foreground flex-grow">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section className="mb-16">
-          <h2 className="text-3xl font-semibold mb-8 text-center">Solana Blinks: Social Media Transactions</h2>
-          <Card className="bg-gradient-to-br from-[#F5E6D3] to-[#E6D2B5]">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mb-16"
+        >
+          <h2 className="text-3xl font-semibold mb-8 text-center">Solana Blinks & Blinkboard</h2>
+          <Card className="bg-gradient-to-br from-card to-background">
             <CardHeader>
-              <CardTitle className="text-2xl text-center">Revolutionizing Social Media Transactions</CardTitle>
-              <CardDescription className="text-center text-lg">Seamless integration of blockchain with your favorite social platforms</CardDescription>
+              <CardTitle className="text-2xl text-center">Revolutionizing Blockchain Interactions</CardTitle>
+              <CardDescription className="text-center text-lg">Seamless integration of blockchain with your favorite social platforms and powerful analytics</CardDescription>
             </CardHeader>
             <CardContent className="p-8">
-              <Tabs defaultValue="how-it-works" className="w-full">
+              <Tabs defaultValue="solana-blinks" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="how-it-works">How It Works</TabsTrigger>
-                  <TabsTrigger value="benefits">Benefits</TabsTrigger>
+                  <TabsTrigger value="solana-blinks">Solana Blinks</TabsTrigger>
+                  <TabsTrigger value="blinkboard">Blinkboard</TabsTrigger>
                 </TabsList>
-                <TabsContent value="how-it-works">
-                  <h3 className="text-xl font-semibold mb-2">How It Works</h3>
-                  <ol className="list-decimal list-inside space-y-2">
-                    <li>Connect your social media account to the BARK BaaS Platform</li>
-                    <li>Initiate a transaction by mentioning the recipient and including a special command</li>
-                    <li>Confirm the transaction through our secure interface</li>
-                    <li>The transaction is processed on the Solana blockchain</li>
-                    <li>Both parties receive confirmation of the completed transaction</li>
-                  </ol>
-                </TabsContent>
-                <TabsContent value="benefits">
-                  <h3 className="text-xl font-semibold mb-2">Benefits</h3>
+                <TabsContent value="solana-blinks">
+                  <h3 className="text-xl font-semibold mb-2">Solana Blinks: Social Media Transactions</h3>
                   <ul className="list-disc list-inside space-y-2">
-                    <li>Instant peer-to-peer transactions within your social network</li>
-                    <li>Enhanced security through blockchain technology</li>
+                    <li>Perform blockchain transactions directly through social media platforms</li>
                     <li>Seamless integration with existing social media workflows</li>
+                    <li>Enhanced security through Solana blockchain technology</li>
                     <li>Support for multiple cryptocurrencies</li>
                     <li>Real-time transaction tracking and confirmation</li>
+                  </ul>
+                </TabsContent>
+                <TabsContent value="blinkboard">
+                  <h3 className="text-xl font-semibold mb-2">Blinkboard: Your Blinks Dashboard</h3>
+                  <ul className="list-disc list-inside space-y-2">
+                    <li>Comprehensive overview of your Solana Blinks activities</li>
+                    <li>Real-time tracking of transactions across platforms</li>
+                    <li>Advanced analytics on usage patterns and trends</li>
+                    <li>Insights to optimize your blockchain interactions</li>
+                    <li>Customizable accounts, alerts and notifications</li>
                   </ul>
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
-        </section>
+        </motion.section>
 
-        <section className="mb-16">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+          className="mb-16"
+        >
+          <h2 className="text-3xl font-semibold mb-8 text-center">Our Roadmap</h2>
+          <ScrollArea className="h-[600px] w-full rounded-md border p-4">
+            <div className="space-y-8">
+              {roadmap.map((phase, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle>{phase.phase}</CardTitle>
+                    <CardDescription>{phase.timeline}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul  className="space-y-2">
+                      {phase.milestones.map((milestone, mIndex) => (
+                        <li key={mIndex} className="flex items-center">
+                          {milestone.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+                          {milestone.status === 'in-progress' && <Clock className="mr-2 h-4 w-4 text-yellow-500" />}
+                          {milestone.status === 'planned' && <Circle className="mr-2 h-4 w-4 text-muted-foreground" />}
+                          <span className={milestone.status === 'completed' ? 'line-through' : ''}>{milestone.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </motion.section>
+
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity:  1, y: 0 }}
+          transition={{ duration: 0.5, delay: 1 }}
+          className="mb-16"
+        >
           <h2 className="text-3xl font-semibold mb-8 text-center">Frequently Asked Questions</h2>
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, index) => (
-              <AccordionItem value={`item-${index}`} key={index} className="border-b border-gray-200">
+              <AccordionItem value={`item-${index}`} key={index}>
                 <AccordionTrigger className="text-lg font-medium py-4">{faq.question}</AccordionTrigger>
-                <AccordionContent className="py-4 text-gray-600">{faq.answer}</AccordionContent>
+                <AccordionContent className="py-4 text-muted-foreground">{faq.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
-        </section>
+        </motion.section>
 
-        <section className="mb-16">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 1.2 }}
+          className="mb-16"
+        >
           <h2 className="text-3xl font-semibold mb-8 text-center">Our Partners</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {partners.map((partner, index) => (
-              <div key={index} className="flex flex-col items-center">
+              <motion.div
+                key={index}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex flex-col items-center"
+              >
                 <Image src={partner.logo} alt={`${partner.name} logo`} width={100} height={100} className="object-contain mb-2" />
                 <p className="text-center font-semibold">{partner.name}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section>
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 1.4 }}
+        >
           <h2 className="text-3xl font-semibold mb-8 text-center">Contact Us</h2>
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
@@ -226,6 +357,19 @@ export default function AboutPage() {
                   <Input id="email" name="email" type="email" required />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="inquiryType">Inquiry Type</Label>
+                  <Select name="inquiryType">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select inquiry type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General Inquiry</SelectItem>
+                      <SelectItem value="support">Technical Support</SelectItem>
+                      <SelectItem value="partnership">Partnership Opportunity</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
                   <Textarea id="message" name="message" required className="min-h-[100px]" />
                 </div>
@@ -235,18 +379,39 @@ export default function AboutPage() {
               </form>
             </CardContent>
           </Card>
-        </section>
-
-        <footer className="mt-16 text-center text-gray-600">
-          <p>&copy; 2023 BARK BaaS Platform. All rights reserved.</p>
-          <div className="mt-4 flex justify-center space-x-4">
-            <a href="#" className="hover:text-gray-900">Terms of Service</a>
-            <a href="#" className="hover:text-gray-900">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-900 flex items-center">
-              Documentation <ExternalLink className="ml-1 h-4 w-4" />
-            </a>
+          <div className="mt-8 text-center">
+            <p className="text-muted-foreground">You can also reach us directly at:</p>
+            <div className="flex justify-center space-x-4 mt-2">
+              <a href="mailto:contact@barkprotocol.net" className="flex items-center text-primary hover:underline">
+                <Mail className="mr-2 h-4 w-4" />
+                contact@barkprotocol.net
+              </a>
+              <a href="mailto:partnership@barkprotocol.net" className="flex items-center text-primary hover:underline">
+                <Mail className="mr-2 h-4 w-4" />
+                partnership@barkprotocol.net
+              </a>
+            </div>
           </div>
-        </footer>
+        </motion.section>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="fixed bottom-4 right-4">
+              Need Help?
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Chat with our AI Assistant</DialogTitle>
+              <DialogDescription>
+                Get instant answers to your questions about BARK Protocol.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <p>AI chat interface would go here.</p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   )

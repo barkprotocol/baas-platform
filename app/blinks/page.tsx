@@ -1,23 +1,26 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/components/ui/use-toast"
-import { AlertCircle, Plus, Search, CreditCard, Gift, Image as ImageIcon, ArrowLeft, BarChart, PieChart, Activity, Edit, Trash2 } from 'lucide-react'
+import { AlertCircle, Plus, Search, CreditCard, Gift, Image as ImageIcon, ArrowLeft, BarChart, PieChart, Activity, Edit, Trash2, Download, Share2 } from 'lucide-react'
 import { WalletButton } from "@/components/ui/wallet-button"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts'
 import { Badge } from "@/components/ui/badge"
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { BlinkboardSidebar } from '@/components/ui/layout/blinkboard/sidebar'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 
 const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
 const iconColor = "#BBA597"
@@ -51,6 +54,8 @@ const mockChartData = [
   { name: 'Jun', value: 700 },
 ]
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
+
 export default function BlinkboardPage() {
   const router = useRouter()
   const { publicKey } = useWallet()
@@ -62,28 +67,30 @@ export default function BlinkboardPage() {
   const [sortBy, setSortBy] = useState<'name' | 'amount' | 'createdAt'>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'expired'>('all')
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingBlink, setEditingBlink] = useState<Blink | null>(null)
+
+  const fetchBlinks = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      // In a real application, you would fetch data from an API here
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulating API delay
+      setBlinks(mockBlinks)
+    } catch (error) {
+      console.error('Error fetching blinks:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load blinks. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toast])
 
   useEffect(() => {
-    const fetchBlinks = async () => {
-      setIsLoading(true)
-      try {
-        // In a real application, you would fetch data from an API here
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulating API delay
-        setBlinks(mockBlinks)
-      } catch (error) {
-        console.error('Error fetching blinks:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load blinks. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchBlinks()
-  }, [toast])
+  }, [fetchBlinks])
 
   const filteredAndSortedBlinks = useMemo(() => {
     return blinks
@@ -122,20 +129,69 @@ export default function BlinkboardPage() {
     }
   }
 
-  const handleEditBlink = (id: string) => {
-    // Implement edit functionality
-    console.log(`Editing blink with id: ${id}`)
+  const handleEditBlink = (blink: Blink) => {
+    setEditingBlink(blink)
+    setIsEditDialogOpen(true)
   }
 
   const handleDeleteBlink = (id: string) => {
     // Implement delete functionality
-    console.log(`Deleting blink with id: ${id}`)
+    setBlinks(blinks.filter(blink => blink.id !== id))
+    toast({
+      title: "Blink Deleted",
+      description: `Blink with ID ${id} has been deleted.`,
+    })
   }
+
+  const handleSaveEdit = (updatedBlink: Blink) => {
+    setBlinks(blinks.map(blink => blink.id === updatedBlink.id ? updatedBlink : blink))
+    setIsEditDialogOpen(false)
+    setEditingBlink(null)
+    toast({
+      title: "Blink Updated",
+      description: `Blink "${updatedBlink.name}" has been updated.`,
+    })
+  }
+
+  const handleExportCSV = () => {
+    const csvContent = [
+      ["ID", "Name", "Type", "Amount", "Currency", "Status", "Created At"],
+      ...filteredAndSortedBlinks.map(blink => [
+        blink.id,
+        blink.name,
+        blink.type,
+        blink.amount,
+        blink.currency,
+        blink.status,
+        blink.createdAt
+      ])
+    ].map(e => e.join(",")).join("\n")
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement("a")
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute("href", url)
+      link.setAttribute("download", "blinks_export.csv")
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
+
+  const pieChartData = useMemo(() => {
+    const data = blinks.reduce((acc, blink) => {
+      acc[blink.type] = (acc[blink.type] || 0) + blink.amount
+      return acc
+    }, {} as Record<BlinkType, number>)
+    return Object.entries(data).map(([name, value]) => ({ name, value }))
+  }, [blinks])
 
   return (
     <div className="flex">
       <BlinkboardSidebar />
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
@@ -214,24 +270,54 @@ export default function BlinkboardPage() {
             </Card>
           </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Blink Activity</CardTitle>
-              <CardDescription>Your Blink creation and usage over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mockChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="value" stroke={iconColor} activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Blink Activity</CardTitle>
+                <CardDescription>Your Blink creation and usage over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={mockChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="value" stroke={iconColor} activeDot={{ r: 8 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Blink Distribution</CardTitle>
+                <CardDescription>Distribution of your Blinks by type</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RePieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RePieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
 
           <Card>
             <CardHeader>
@@ -332,7 +418,7 @@ export default function BlinkboardPage() {
                             <TooltipProvider>
                               <UITooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="outline" size="icon" onClick={() => handleEditBlink(blink.id)}>
+                                  <Button variant="outline" size="icon" onClick={() => handleEditBlink(blink)}>
                                     <Edit className="h-4 w-4" style={{ color: iconColor }} />
                                   </Button>
                                 </TooltipTrigger>
@@ -353,6 +439,18 @@ export default function BlinkboardPage() {
                                 </TooltipContent>
                               </UITooltip>
                             </TooltipProvider>
+                            <TooltipProvider>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="outline" size="icon">
+                                    <Share2 className="h-4 w-4" style={{ color: iconColor }} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Share Blink</p>
+                                </TooltipContent>
+                              </UITooltip>
+                            </TooltipProvider>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -363,9 +461,82 @@ export default function BlinkboardPage() {
                 <div className="text-center py-4">No Blinks found. Create your first Blink!</div>
               )}
             </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={handleExportCSV}>
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                Total Blinks: {filteredAndSortedBlinks.length}
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Blink</DialogTitle>
+            <DialogDescription>
+              Make changes to your Blink here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          {editingBlink && (
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleSaveEdit(editingBlink)
+            }}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={editingBlink.name}
+                    onChange={(e) => setEditingBlink({ ...editingBlink, name: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">
+                    Amount
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={editingBlink.amount}
+                    onChange={(e) => setEditingBlink({ ...editingBlink, amount: parseFloat(e.target.value) })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select
+                    value={editingBlink.status}
+                    onValueChange={(value) => setEditingBlink({ ...editingBlink, status: value as Blink['status'] })}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Save changes</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -5,40 +5,53 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, RefreshCw, TrendingUp, Users, Activity, DollarSign } from 'lucide-react'
+import { AlertCircle, RefreshCw, TrendingUp, Users, Activity, DollarSign, Download } from 'lucide-react'
 import { useToast } from "@/components/ui/use-toast"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
+type TokenHolder = {
+  address: string
+  balance: number
+  percentage: number
+  barkBalance: number
+  usdcBalance: number
+}
+
+type User = {
+  id: number
+  username: string
+  email: string
+  joinDate: string
+  solanaAddress: string
+}
+
+type Account = {
+  id: number
+  userId: number
+  solBalance: number
+  barkBalance: number
+  usdcBalance: number
+  lastTransaction: string
+}
+
+type TokenMetrics = {
+  barkTotalSupply: number
+  barkCirculatingSupply: number
+  barkPrice: number
+  barkMarketCap: number
+  barkVolume24h: number
+}
+
 type AnalyticsData = {
-  tokenMetrics: {
-    totalSupply: number
-    circulatingSupply: number
-    holders: number
-    transactions: number
-  }
-  priceData: Array<{
-    date: string
-    price: number
-    volume: number
-  }>
-  topHolders: Array<{
-    address: string
-    balance: number
-    percentage: number
-  }>
-  transactionVolume: Array<{
-    date: string
-    volume: number
-  }>
-  tokenDistribution: Array<{
-    category: string
-    amount: number
-  }>
+  tokenHolders: TokenHolder[]
+  users: User[]
+  accounts: Account[]
+  tokenMetrics: TokenMetrics
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
-export default function AnalyticsPage() {
+export default function Component() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
@@ -46,9 +59,11 @@ export default function AnalyticsPage() {
   const fetchAnalyticsData = async () => {
     setIsLoading(true)
     try {
-      // In a real application, this would be an API call
-      const response = await fetch('/api/analytics')
-      const data = await response.json()
+      const response = await fetch('/api/v1/analytics')
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+      const data: AnalyticsData = await response.json()
       setAnalyticsData(data)
     } catch (error) {
       toast({
@@ -64,6 +79,34 @@ export default function AnalyticsPage() {
   useEffect(() => {
     fetchAnalyticsData()
   }, [])
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch('/api/v1/analytics/export-csv')
+      if (!response.ok) {
+        throw new Error('Failed to generate CSV')
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = 'bark_protocol_analytics.csv'
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      toast({
+        title: "Success",
+        description: "CSV file has been downloaded.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export CSV. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
@@ -85,10 +128,16 @@ export default function AnalyticsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">BARK Protocol Analytics</h1>
-        <Button onClick={fetchAnalyticsData} variant="outline" className="flex items-center">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh Data
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={fetchAnalyticsData} variant="outline" className="flex items-center">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh Data
+          </Button>
+          <Button onClick={handleExportCSV} variant="outline" className="flex items-center">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -100,7 +149,7 @@ export default function AnalyticsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.tokenMetrics.totalSupply.toLocaleString()} BARK</div>
+            <div className="text-2xl font-bold">{analyticsData.tokenMetrics.barkTotalSupply.toLocaleString()} BARK</div>
           </CardContent>
         </Card>
         <Card>
@@ -111,72 +160,39 @@ export default function AnalyticsPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.tokenMetrics.circulatingSupply.toLocaleString()} BARK</div>
+            <div className="text-2xl font-bold">{analyticsData.tokenMetrics.barkCirculatingSupply.toLocaleString()} BARK</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Holders
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.tokenMetrics.holders.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Transactions
+              BARK Price
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.tokenMetrics.transactions.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${analyticsData.tokenMetrics.barkPrice.toFixed(4)} USDC</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Market Cap
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${analyticsData.tokenMetrics.barkMarketCap.toLocaleString()} USDC</div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="price" className="space-y-4">
+      <Tabs defaultValue="holders" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="price">Price & Volume</TabsTrigger>
           <TabsTrigger value="holders">Top Holders</TabsTrigger>
-          <TabsTrigger value="transactions">Transaction Volume</TabsTrigger>
-          <TabsTrigger value="distribution">Token Distribution</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="accounts">Accounts</TabsTrigger>
         </TabsList>
-        <TabsContent value="price">
-          <Card>
-            <CardHeader>
-              <CardTitle>BARK Price and Volume</CardTitle>
-              <CardDescription>Historical price and volume data for BARK token</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={analyticsData.priceData}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Line yAxisId="left" type="monotone" dataKey="price" stroke="#8884d8" activeDot={{ r: 8 }} name="Price (USD)" />
-                    <Line yAxisId="right" type="monotone" dataKey="volume" stroke="#82ca9d" name="Volume" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
         <TabsContent value="holders">
           <Card>
             <CardHeader>
@@ -189,15 +205,19 @@ export default function AnalyticsPage() {
                   <thead>
                     <tr>
                       <th className="text-left p-2">Address</th>
-                      <th className="text-right p-2">Balance</th>
+                      <th className="text-right p-2">SOL Balance</th>
+                      <th className="text-right p-2">BARK Balance</th>
+                      <th className="text-right p-2">USDC Balance</th>
                       <th className="text-right p-2">Percentage</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {analyticsData.topHolders.map((holder, index) => (
+                    {analyticsData.tokenHolders.map((holder, index) => (
                       <tr key={index} className="border-t">
                         <td className="p-2">{holder.address}</td>
-                        <td className="text-right p-2">{holder.balance.toLocaleString()} BARK</td>
+                        <td className="text-right p-2">{holder.balance.toLocaleString()} SOL</td>
+                        <td className="text-right p-2">{holder.barkBalance.toLocaleString()} BARK</td>
+                        <td className="text-right p-2">{holder.usdcBalance.toLocaleString()} USDC</td>
                         <td className="text-right p-2">{holder.percentage.toFixed(2)}%</td>
                       </tr>
                     ))}
@@ -207,64 +227,72 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="transactions">
+        <TabsContent value="users">
           <Card>
             <CardHeader>
-              <CardTitle>Transaction Volume</CardTitle>
-              <CardDescription>Daily transaction volume of BARK tokens</CardDescription>
+              <CardTitle>BARK Users</CardTitle>
+              <CardDescription>Registered users of the BARK protocol</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={analyticsData.transactionVolume}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="volume" fill="#8884d8" name="Transaction Volume" />
-                  </BarChart>
-                </ResponsiveContainer>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left p-2">ID</th>
+                      <th className="text-left p-2">Username</th>
+                      <th className="text-left p-2">Email</th>
+                      <th className="text-left p-2">Join Date</th>
+                      <th className="text-left p-2">Solana Address</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analyticsData.users.map((user, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="p-2">{user.id}</td>
+                        <td className="p-2">{user.username}</td>
+                        <td className="p-2">{user.email}</td>
+                        <td className="p-2">{user.joinDate}</td>
+                        <td className="p-2">{user.solanaAddress}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="distribution">
+        <TabsContent value="accounts">
           <Card>
             <CardHeader>
-              <CardTitle>Token Distribution</CardTitle>
-              <CardDescription>Distribution of BARK tokens across different categories</CardDescription>
+              <CardTitle>BARK Accounts</CardTitle>
+              <CardDescription>Account balances and transaction history</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={analyticsData.tokenDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={150}
-                      fill="#8884d8"
-                      dataKey="amount"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {analyticsData.tokenDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left p-2">ID</th>
+                      <th className="text-left p-2">User ID</th>
+                      <th className="text-right p-2">SOL Balance</th>
+                      <th className="text-right p-2">BARK Balance</th>
+                      <th className="text-right p-2">USDC Balance</th>
+                      <th className="text-left p-2">Last Transaction</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analyticsData.accounts.map((account, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="p-2">{account.id}</td>
+                        <td className="p-2">{account.userId}</td>
+                        <td className="text-right p-2">{account.solBalance.toFixed(2)} SOL</td>
+                        <td className="text-right p-2">{account.barkBalance.toLocaleString()} BARK</td>
+                        <td className="text-right p-2">{account.usdcBalance.toLocaleString()} USDC</td>
+                        <td className="p-2">{account.lastTransaction}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

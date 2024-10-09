@@ -1,128 +1,57 @@
-'use client';
+'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { motion } from 'framer-motion'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, ArrowLeft, Check, RefreshCcw, Zap, Coins, CreditCard, PlusCircle, Landmark, Gift, Store, ArrowRightLeft, Gem, Users, Rocket, Vote, Award } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { AlertCircle, Gift, CreditCard, Coins, PlusCircle, Send, ShoppingBag, Zap, Package, Store, Landmark, ArrowLeft, Download, Github } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { WalletButton } from "@/components/ui/wallet-button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { BlinkForm } from '@/components/get-started/blink-form'
-import { DonationForm } from '@/components/get-started/donation-form'
-import { PaymentForm } from '@/components/get-started/payment-form'
-import { NFTForm } from '@/components/get-started/nft-form'
-import { CrowdfundingForm } from '@/components/get-started/crowdfunding-form'
-import { GiftForm } from '@/components/get-started/gift-form'
-import { MerchantForm } from '@/components/get-started/merchant-form'
-import { SwapForm } from '@/components/get-started/swap-form'
-import { StakingForm } from '@/components/get-started/staking-form'
-import { MembershipForm } from '@/components/get-started/membership-form'
-import { TieredTokenForm } from '@/components/get-started/tiered-token-form'
-import { AirdropForm } from '@/components/get-started/airdrop-form'
-import { GovernanceForm } from '@/components/get-started/governance-form'
-import { RewardsForm } from '@/components/get-started/rewards-form'
-import { createBlink, processDonation, makePayment, mintNFT, startCrowdfunding, sendGift, createMerchant, performSwap, stakeTokens, createMembership, createTieredToken, createAirdrop, createGovernanceProposal, distributeRewards } from '@/app/actions/solana/solana'
-import { Skeleton } from "@/components/ui/skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Loader2 } from 'lucide-react'
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
-interface Tier {
-  name: string;
-  description: string;
-  features: string[];
-  price: string;
+interface ApiResponse {
+  success: boolean;
 }
 
-const tiers: Tier[] = [
-  {
-    name: "Basic",
-    description: "Essential features for individuals",
-    features: ["Create Blinks", "Process Donations", "Make Payments", "Token Swaps"],
-    price: "Free"
-  },
-  {
-    name: "Pro",
-    description: "Advanced features for small businesses",
-    features: ["All Basic features", "Mint NFTs", "Airdrop Campaigns", "Governance", "Rewards"],
-    price: "$19.99/month"
-  },
-  {
-    name: "Enterprise",
-    description: "Full suite for large organizations",
-    features: ["All Pro features", "Send Gifts", "Create Merchant Accounts", "Staking", "Membership Programs", "Start Crowdfunding Campaigns", "Treasury Rewards"],
-    price: "$29.99/month"
-  }
-];
+// BARK Blinkboard Enterprise API functions (replace these with actual API calls)
+const createBlink = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const processDonation = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const makePayment = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const mintNFT = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const startCrowdfunding = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const sendGift = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+const createMerchant = async (data: any): Promise<ApiResponse> => new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
 
 export default function GetStartedPage() {
   const router = useRouter()
+  const { publicKey } = useWallet()
   const { toast } = useToast()
-  const { publicKey, connected } = useWallet()
-  const [activeTab, setActiveTab] = useState('tiers')
-  const [selectedTier, setSelectedTier] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('selectedTier') || null
-    }
-    return null
-  })
+  const [activeTab, setActiveTab] = useState('blink')
   const [isLoading, setIsLoading] = useState(false)
-  const [isPriceFetching, setIsPriceFetching] = useState(false)
-  const [confirmationOpen, setConfirmationOpen] = useState(false)
-  const [confirmationAction, setConfirmationAction] = useState('')
-  const [solPrice, setSolPrice] = useState<number | null>(null)
-  const [usdcPrice, setUsdcPrice] = useState<number | null>(null)
+  const nftImageRef = useRef<HTMLInputElement>(null)
+  const campaignImageRef = useRef<HTMLInputElement>(null)
+  const [nftPreview, setNftPreview] = useState<string | null>(null)
+  const [campaignPreview, setCampaignPreview] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!connected) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to use all features.",
-        variant: "destructive",
-      })
-    }
-    fetchPrices()
-  }, [connected, toast])
-
-  useEffect(() => {
-    if (selectedTier) {
-      localStorage.setItem('selectedTier', selectedTier)
-    }
-  }, [selectedTier])
-
-  const fetchPrices = useCallback(async () => {
-    setIsPriceFetching(true)
-    try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,usd-coin&vs_currencies=usd')
-      const data = await response.json()
-      setSolPrice(data.solana.usd)
-      setUsdcPrice(data['usd-coin'].usd)
-    } catch (error) {
-      console.error('Failed to fetch prices:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch current prices. Please try again later.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsPriceFetching(false)
-    }
-  }, [toast])
-
-  const handleSubmit = useCallback(async (action: string, data: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, action: string) => {
+    e.preventDefault()
     setIsLoading(true)
 
+    const formData = new FormData(e.currentTarget)
+    const data = Object.fromEntries(formData.entries())
+
     try {
-      if (!connected) {
-        throw new Error("Wallet not connected")
-      }
-
-      if (!selectedTier) {
-        throw new Error("Please select a tier before proceeding")
-      }
-
-      let result;
+      let result: ApiResponse;
       switch (action) {
         case 'blink':
           result = await createBlink(data)
@@ -145,27 +74,6 @@ export default function GetStartedPage() {
         case 'merchant':
           result = await createMerchant(data)
           break
-        case 'swap':
-          result = await performSwap(data)
-          break
-        case 'staking':
-          result = await stakeTokens(data)
-          break
-        case 'membership':
-          result = await createMembership(data)
-          break
-        case 'tieredToken':
-          result = await createTieredToken(data)
-          break
-        case 'airdrop':
-          result = await createAirdrop(data)
-          break
-        case 'governance':
-          result = await createGovernanceProposal(data)
-          break
-        case 'rewards':
-          result = await distributeRewards(data)
-          break
         default:
           throw new Error('Invalid action')
       }
@@ -173,218 +81,532 @@ export default function GetStartedPage() {
       if (result.success) {
         toast({
           title: "Success",
-          description: result.message || `${action.charAt(0).toUpperCase() + action.slice(1)} processed successfully.`,
+          description: `${action.charAt(0).toUpperCase() + action.slice(1)} processed successfully.`,
         })
+        // Reset form
+        e.currentTarget.reset()
+        // Reset previews
+        setNftPreview(null)
+        setCampaignPreview(null)
       } else {
-        throw new Error(result.message || 'Operation failed')
+        throw new Error('Operation failed')
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : `Failed to process ${action}. Please try again.`,
+        description: `Failed to process ${action}. Please try again.`,
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
-      setConfirmationOpen(false)
-    }
-  }, [connected, toast, selectedTier])
-
-  const handleBackToMain = useCallback(() => {
-    router.push('/')
-  }, [router])
-
-  const handleConfirmation = useCallback((action: string) => {
-    setConfirmationAction(action)
-    setConfirmationOpen(true)
-  }, [])
-
-  const handleTierSelection = useCallback((tierName: string) => {
-    setSelectedTier(tierName)
-    setActiveTab('blink') // Move to the first feature tab after selecting a tier
-  }, [])
-
-  const renderTabIcon = (tab: string) => {
-    switch (tab) {
-      case 'blink': return <Zap className="w-4 h-4 mr-2" />
-      case 'donations': return <Coins className="w-4 h-4 mr-2" />
-      case 'payments': return <CreditCard className="w-4 h-4 mr-2" />
-      case 'swap': return <ArrowRightLeft className="w-4 h-4 mr-2" />
-      case 'nft': return <PlusCircle className="w-4 h-4 mr-2" />
-      case 'crowdfunding': return <Landmark className="w-4 h-4 mr-2" />
-      case 'staking': return <Gem className="w-4 h-4 mr-2" />
-      case 'tieredToken': return <Gem className="w-4 h-4 mr-2" />
-      case 'gift': return <Gift className="w-4 h-4 mr-2" />
-      case 'merchant': return <Store className="w-4 h-4 mr-2" />
-      case 'membership': return <Users className="w-4 h-4 mr-2" />
-      case 'airdrop': return <Rocket className="w-4 h-4 mr-2" />
-      case 'governance': return <Vote className="w-4 h-4 mr-2" />
-      case 'rewards': return <Award className="w-4 h-4 mr-2" />
-      default: return null
     }
   }
 
-  const availableTabs = useMemo(() => {
-    const basicTabs = ['blink', 'donations', 'payments', 'swap'];
-    const proTabs = [...basicTabs, 'nft', 'airdrop', 'governance', 'rewards'];
-    const enterpriseTabs = [...proTabs, 'crowdfunding', 'staking', 'tieredToken', 'gift', 'merchant', 'membership'];
+  const handleBackToMain = () => {
+    router.push('/')
+  }
 
-    switch (selectedTier) {
-      case 'Basic':
-        return basicTabs;
-      case 'Pro':
-        return proTabs;
-      case 'Enterprise':
-        return enterpriseTabs;
-      default:
-        return [];
+  const handleImageDownload = (inputRef: React.RefObject<HTMLInputElement>, imageName: string) => {
+    const imageUrl = inputRef.current?.value
+    if (!imageUrl) {
+      toast({
+        title: "Error",
+        description: "No image URL provided.",
+        variant: "destructive",
+      })
+      return
     }
-  }, [selectedTier]);
+
+    fetch(imageUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = imageName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => toast({
+        title: "Error",
+        description: "Failed to download image. Please try again.",
+        variant: "destructive",
+      }));
+  }
+
+  const handleImagePreview = useCallback((inputRef: React.RefObject<HTMLInputElement>, setPreview: (url: string | null) => void) => {
+    const imageUrl = inputRef.current?.value
+    if (imageUrl) {
+      setPreview(imageUrl)
+    } else {
+      setPreview(null)
+    }
+  }, [])
 
   return (
-    <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto py-10 px-4 sm:px-6 lg:px-8"
+    >
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-0">Get Started with BARK Protocol</h1>
-        <div className="flex space-x-4">
-          <WalletButton />
-          <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" /> 
-            <span className="sr-only">Navigate back to main page</span>
-            Back to Main
-          </Button>
-        </div>
+        <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
+          <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Back to </span>Main
+        </Button>
       </div>
       <Alert className="mb-6">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="h-4 w-4" aria-hidden="true" />
         <AlertTitle>Welcome to your Blinkboard!</AlertTitle>
         <AlertDescription>
-          Here you can create Solana Blinks, process donations, make payments, mint NFTs, start crowdfunding campaigns, swap tokens, stake, create memberships, and more.
+          Here you can create Solana Blinks, process donations, make payments, mint NFTs, start crowdfunding campaigns, send gifts, and set up your merchant account.
         </AlertDescription>
       </Alert>
       
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex space-x-4">
-          <div className="text-sm font-medium">
-            SOL Price: {isPriceFetching ? <Skeleton className="h-4 w-16" /> : (solPrice ? `$${solPrice.toFixed(2)}` : 'N/A')}
-          </div>
-          <div className="text-sm font-medium">
-            USDC Price: {isPriceFetching ? <Skeleton className="h-4 w-16" /> : (usdcPrice ? `$${usdcPrice.toFixed(2)}` : 'N/A')}
-          </div>
-        </div>
-        <Button onClick={fetchPrices} variant="outline" size="sm" className="flex items-center" disabled={isPriceFetching}>
-          <RefreshCcw className="mr-2 h-4 w-4" /> 
-          <span className="sr-only">Refresh cryptocurrency prices</span>
-          Refresh Prices
-        </Button>
-      </div>
-      
-      <Tabs value={activeTab} className="space-y-6" onValueChange={setActiveTab}>
-        <TabsContent value="tiers">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-12">
-            {tiers.map((tier) => (
-              <Card key={tier.name} className={`flex flex-col ${selectedTier === tier.name ? 'ring-2 ring-primary' : ''}`}>
-                <CardHeader>
-                  <CardTitle>{tier.name}</CardTitle>
-                  <CardDescription>{tier.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <ul className="space-y-2">
-                    {tier.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="h-4 w-4 mr-2 text-green-500" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardContent>
-                  <p className="text-2xl font-bold">{tier.price}</p>
-                  <Button 
-                    className="mt-4 w-full" 
-                    onClick={() => handleTierSelection(tier.name)}
-                    variant={selectedTier === tier.name ? "secondary" : "default"}
-                  >
-                    {selectedTier === tier.name ? "Selected" : "Select Tier"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsList className="flex flex-wrap justify-start gap-2 mb-6">
-          <TabsTrigger value="tiers" className="flex-grow sm:flex-grow-0">Select Tier</TabsTrigger>
-          {availableTabs.map((tab) => (
-            <TabsTrigger 
-              key={tab}
-              value={tab} 
-              className="flex-grow sm:flex-grow-0" 
-              disabled={!selectedTier}
-            >
-              {renderTabIcon(tab)}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </TabsTrigger>
-          ))}
+      <Tabs defaultValue="blink" className="space-y-6" onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <TabsTrigger value="blink" className="flex items-center justify-center"><Zap className="w-4 h-4 mr-2" aria-hidden="true" />Blink</TabsTrigger>
+          <TabsTrigger value="donations" className="flex items-center justify-center"><Coins className="w-4 h-4 mr-2" aria-hidden="true" />Donations</TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center justify-center"><CreditCard className="w-4 h-4 mr-2" aria-hidden="true" />Payments</TabsTrigger>
+          <TabsTrigger value="nft" className="flex items-center justify-center"><PlusCircle className="w-4 h-4 mr-2" aria-hidden="true" />Mint NFT</TabsTrigger>
+          <TabsTrigger value="crowdfunding" className="flex items-center justify-center"><Landmark className="w-4 h-4 mr-2" aria-hidden="true" />Crowdfunding</TabsTrigger>
+          <TabsTrigger value="gift" className="flex items-center justify-center"><Gift className="w-4 h-4 mr-2" aria-hidden="true" />Gift</TabsTrigger>
+          <TabsTrigger value="merchant" className="flex items-center justify-center"><Store className="w-4 h-4 mr-2" aria-hidden="true" />Merchant</TabsTrigger>
         </TabsList>
         
-        {activeTab !== 'tiers' && (
+        <TabsContent value="blink">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                {renderTabIcon(activeTab)}
-                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-              </CardTitle>
-              <CardDescription>
-                {activeTab === 'blink' && "Set up your Blink for instant payments."}
-                {activeTab === 'donations' && "Receive donations for your cause."}
-                {activeTab === 'payments' && "Send payments quickly and securely."}
-                {activeTab === 'swap' && "Exchange one token for another quickly and easily."}
-                {activeTab === 'nft' && "Create a unique digital asset on the blockchain."}
-                {activeTab === 'crowdfunding' && "Raise funds for your project or cause."}
-                {activeTab === 'staking' && "Earn rewards by staking your tokens."}
-                {activeTab === 'tieredToken' && "Set up a tiered token system for your project."}
-                {activeTab === 'gift' && "Spread joy with digital gifts."}
-                {activeTab === 'merchant' && "Set up your merchant account to start selling."}
-                {activeTab === 'membership' && "Set up a membership program for your organization."}
-                {activeTab === 'airdrop' && "Distribute tokens to multiple addresses simultaneously."}
-                {activeTab === 'governance' && "Create and manage governance proposals."}
-                {activeTab === 'rewards' && "Set up and distribute rewards to your community."}
-              </CardDescription>
+              <CardTitle className="flex items-center"><Zap className="w-5 h-5 mr-2" aria-hidden="true" />Create a New Blink</CardTitle>
+              <CardDescription>Set up your Blink for instant payments.</CardDescription>
             </CardHeader>
             <CardContent>
-              {activeTab === 'blink' && <BlinkForm onSubmit={(data) => handleSubmit('blink', data)} isLoading={isLoading} isWalletConnected={connected} />}
-              {activeTab === 'donations' && <DonationForm onSubmit={(data) => handleSubmit('donation', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
-              {activeTab === 'payments' && <PaymentForm onSubmit={(data) => handleSubmit('payment', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
-              {activeTab === 'swap' && <SwapForm onSubmit={(data) => handleSubmit('swap', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
-              {activeTab === 'nft' && <NFTForm onSubmit={(data) => handleConfirmation('nft')} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} />}
-              {activeTab === 'crowdfunding' && <CrowdfundingForm onSubmit={(data) => handleConfirmation('crowdfunding')} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
-              {activeTab === 'staking' && <StakingForm onSubmit={(data) => handleSubmit('staking', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} />}
-              {activeTab === 'tieredToken' && <TieredTokenForm onSubmit={(data) => handleConfirmation('tieredToken')} isLoading={isLoading} isWalletConnected={connected} />}
-              {activeTab === 'gift' && <GiftForm onSubmit={(data) => handleSubmit('gift', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
-              {activeTab === 'merchant' && <MerchantForm onSubmit={(data) => handleConfirmation('merchant')} isLoading={isLoading} isWalletConnected={connected} />}
-              {activeTab === 'membership' && <MembershipForm onSubmit={(data) => handleConfirmation('membership')} isLoading={isLoading} isWalletConnected={connected} />}
-              {activeTab === 'airdrop' && <AirdropForm onSubmit={(data) => handleSubmit('airdrop', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
-              {activeTab === 'governance' && <GovernanceForm onSubmit={(data) => handleSubmit('governance', data)} isLoading={isLoading} isWalletConnected={connected} />}
-              {activeTab === 'rewards' && <RewardsForm onSubmit={(data) => handleSubmit('rewards', data)} isLoading={isLoading} isWalletConnected={connected} solPrice={solPrice} usdcPrice={usdcPrice} />}
+              <form onSubmit={(e) => handleSubmit(e, 'blink')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="blinkName">Blink Name</Label>
+                    <Input id="blinkName" name="blinkName" placeholder="Enter your Blink name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="blinkDescription">Description</Label>
+                    <Textarea id="blinkDescription" name="blinkDescription" placeholder="Describe your Blink" required />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Blink'
+                  )}
+                </Button>
+              </form>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
+        
+        <TabsContent value="donations">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Coins className="w-5 h-5 mr-2" aria-hidden="true" />Process Donations</CardTitle>
+              <CardDescription>Receive donations for your cause.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'donation')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="donationAmount">Donation Amount</Label>
+                    <RadioGroup defaultValue="5" name="donationAmount" className="flex space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="5" id="r1" />
+                        <Label htmlFor="r1">$5</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="10" id="r2" />
+                        <Label htmlFor="r2">$10</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="25" id="r3" />
+                        <Label htmlFor="r3">$25</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="r4" />
+                        <Label htmlFor="r4">Custom</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="customAmount">Custom Amount</Label>
+                    <Input id="customAmount" name="customAmount" placeholder="Enter custom amount" type="number" step="0.01" />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="donationCurrency">Currency</Label>
+                    <Select name="donationCurrency" defaultValue="BARK">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BARK">BARK</SelectItem>
+                        <SelectItem value="SOL">SOL</SelectItem>
+                        <SelectItem value="USDC">USDC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="donorName">Donor Name (Optional)</Label>
+                    <Input id="donorName" name="donorName" placeholder="Enter donor's name" />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Process Donation'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><CreditCard className="w-5 h-5 mr-2" aria-hidden="true" />Make a Payment</CardTitle>
+              <CardDescription>Send payments quickly and securely.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'payment')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="paymentAmount">Payment Amount</Label>
+                    <Input id="paymentAmount" name="paymentAmount" placeholder="Enter payment amount" type="number" step="0.01" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                    <Select  name="paymentMethod" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="usdc">
+                          <div className="flex items-center">
+                            <Image src="/icons/usdc.svg" alt="USDC" width={16} height={16} className="mr-2" />
+                            USDC
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="bark">
+                          <div className="flex items-center">
+                            <Image src="/icons/bark.svg" alt="BARK" width={16} height={16} className="mr-2" />
+                            BARK
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="sol">
+                          <div className="flex items-center">
+                            <Image src="/icons/sol.svg" alt="SOL" width={16} height={16} className="mr-2" />
+                            SOL
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="stripe">
+                          <div className="flex items-center">
+                            <Image src="/icons/stripe.svg" alt="Stripe" width={16} height={16} className="mr-2" />
+                            Stripe
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="solana_pay">
+                          <div className="flex items-center">
+                            <Image src="/icons/solana-pay.svg" alt="Solana Pay" width={16} height={16} className="mr-2" />
+                            Solana Pay
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="recipientAddress">Recipient Address</Label>
+                    <Input id="recipientAddress" name="recipientAddress" placeholder="Enter recipient's address" required />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Payment'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="nft">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><PlusCircle className="w-5 h-5 mr-2" aria-hidden="true" />Mint an NFT</CardTitle>
+              <CardDescription>Create a unique digital asset on the blockchain.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'nft')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftName">NFT Name</Label>
+                    <Input id="nftName" name="nftName" placeholder="Enter NFT name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftDescription">NFT Description</Label>
+                    <Textarea id="nftDescription" name="nftDescription" placeholder="Describe your NFT" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftImage">NFT Image URL</Label>
+                    <Input 
+                      id="nftImage" 
+                      name="nftImage" 
+                      placeholder="Enter image URL" 
+                      required 
+                      ref={nftImageRef}
+                      onChange={() => handleImagePreview(nftImageRef, setNftPreview)}
+                    />
+                  </div>
+                  {nftPreview && (
+                    <div className="mt-2">
+                      <Image src={nftPreview} alt="NFT Preview" width={200} height={200} className="rounded-lg" />
+                    </div>
+                  )}
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftCollection">Collection</Label>
+                    <Select name="nftCollection">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a collection" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="collection1">BARK NFT Collection 1</SelectItem>
+                        <SelectItem value="collection2">BARK NFT Collection 2</SelectItem>
+                        <SelectItem value="collection3">BARK NFT Collection 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftRoyalty">Royalty Percentage</Label>
+                    <Input id="nftRoyalty" name="nftRoyalty" type="number" min="0" max="100" step="0.1" placeholder="Enter royalty percentage" required />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="nftSoldable" name="nftSoldable" />
+                    <Label htmlFor="nftSoldable">List for sale immediately</Label>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="nftPrice">Price (if listed for sale)</Label>
+                    <Input id="nftPrice" name="nftPrice" type="number" step="0.01" placeholder="Enter price" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Minting...
+                      </>
+                    ) : (
+                      'Mint NFT'
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => handleImageDownload(nftImageRef, 'nft-image.png')}>
+                    <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Download Image
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="crowdfunding">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Landmark className="w-5 h-5 mr-2" aria-hidden="true" />Start a Crowdfunding Campaign</CardTitle>
+              <CardDescription>Raise funds for your project or cause.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'crowdfunding')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignName">Campaign Name</Label>
+                    <Input id="campaignName" name="campaignName" placeholder="Enter campaign name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignGoal">Funding Goal</Label>
+                    <Input id="campaignGoal" name="campaignGoal" placeholder="Enter funding goal" type="number" step="0.01" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignDescription">Campaign Description</Label>
+                    <Textarea id="campaignDescription" name="campaignDescription" placeholder="Describe your campaign" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="campaignImage">Campaign Image URL</Label>
+                    <Input 
+                      id="campaignImage" 
+                      name="campaignImage" 
+                      placeholder="Enter image URL" 
+                      required 
+                      ref={campaignImageRef}
+                      onChange={() => handleImagePreview(campaignImageRef, setCampaignPreview)}
+                    />
+                  </div>
+                  {campaignPreview && (
+                    <div className="mt-2">
+                      <Image src={campaignPreview} alt="Campaign Preview" width={200} height={200} className="rounded-lg" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      'Start Campaign'
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => handleImageDownload(campaignImageRef, 'campaign-image.png')}>
+                    <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Download Image
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="gift">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Gift className="w-5 h-5 mr-2" aria-hidden="true" />Create or Send a Gift</CardTitle>
+              <CardDescription>Spread joy with digital gifts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'gift')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="giftType">Gift Type</Label>
+                    <Select name="giftType" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gift type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nft">NFT</SelectItem>
+                        <SelectItem value="token">Token</SelectItem>
+                        <SelectItem value="subscription">Subscription</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="giftAmount">Gift Amount</Label>
+                    <Input id="giftAmount" name="giftAmount" placeholder="Enter gift amount" type="number" step="0.01" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="giftCurrency">Currency</Label>
+                    <Select name="giftCurrency" defaultValue="BARK">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BARK">BARK</SelectItem>
+                        <SelectItem value="SOL">SOL</SelectItem>
+                        <SelectItem value="USDC">USDC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="recipientEmail">Recipient Email</Label>
+                    <Input id="recipientEmail" name="recipientEmail" placeholder="Enter recipient's email" type="email" required />
+                  </div>
+                </div>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Gift'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="merchant">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><Store className="w-5 h-5 mr-2" aria-hidden="true" />Create Merchant Account</CardTitle>
+              <CardDescription>Set up your merchant account to start selling.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => handleSubmit(e, 'merchant')}>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantName">Merchant Name</Label>
+                    <Input id="merchantName" name="merchantName" placeholder="Enter merchant name" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantEmail">Merchant Email</Label>
+                    <Input id="merchantEmail" name="merchantEmail" placeholder="Enter merchant email" type="email" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantDescription">Business Description</Label>
+                    <Textarea id="merchantDescription" name="merchantDescription" placeholder="Describe your business" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantWallet">Solana Wallet Address</Label>
+                    <Input id="merchantWallet" name="merchantWallet" placeholder="Enter your Solana wallet address" required />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="merchantGithub">GitHub Repository (Optional)</Label>
+                    <div className="flex">
+                      <Input id="merchantGithub" name="merchantGithub" placeholder="Enter your GitHub repository URL" />
+                      <Button type="button" variant="outline" className="ml-2">
+                        <Github className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Connect
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <Alert className="mt-4">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  <AlertTitle>Merchant Program Fee</AlertTitle>
+                  <AlertDescription>
+                    There is a one-time fee of 0.15 SOL to create a merchant account.
+                  </AlertDescription>
+                </Alert>
+                <Button className="mt-4 w-full sm:w-auto" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Merchant Account'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-
-      <Dialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to proceed with this action? This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmationOpen(false)}>Cancel</Button>
-            <Button onClick={() => handleSubmit(confirmationAction, {})}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </motion.div>
   )
 }

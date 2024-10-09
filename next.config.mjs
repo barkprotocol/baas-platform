@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -29,8 +30,8 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
-    optimizeCss: true,
     scrollRestoration: true,
+    serverActions: true,
   },
   async headers() {
     return [
@@ -55,11 +56,15 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
           },
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
           },
         ],
       },
@@ -84,6 +89,7 @@ const nextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  transpilePackages: ['@tanstack/react-query', 'lucide-react'],
 };
 
 export default nextConfig;

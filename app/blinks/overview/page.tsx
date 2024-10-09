@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/components/ui/use-toast"
-import { AlertCircle, Plus, Search, CreditCard, Gift, Image as ImageIcon, ArrowLeft } from 'lucide-react'
+import { AlertCircle, Plus, Search, CreditCard, Gift, Image as ImageIcon, ArrowLeft, Loader2 } from 'lucide-react'
 import { WalletButton } from "@/components/ui/wallet-button"
+import { fetchBlinks } from '@/lib/api'
 
 const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/barkicon.png"
 const iconColor = "#D0BFB4"
@@ -31,15 +32,7 @@ interface Blink {
   createdAt: string
 }
 
-const mockBlinks: Blink[] = [
-  { id: '1', name: 'Coffee Payment', type: 'payment', amount: 5, currency: 'SOL', status: 'active', createdAt: '2023-06-01' },
-  { id: '2', name: 'Birthday Gift', type: 'gift', amount: 50, currency: 'USDC', status: 'completed', createdAt: '2023-05-15' },
-  { id: '3', name: 'Art Collection', type: 'nft', amount: 1, currency: 'SOL', status: 'active', createdAt: '2023-06-10' },
-  { id: '4', name: 'Rent Payment', type: 'payment', amount: 1000, currency: 'USDC', status: 'active', createdAt: '2023-06-05' },
-  { id: '5', name: 'Graduation Gift', type: 'gift', amount: 100, currency: 'SOL', status: 'expired', createdAt: '2023-04-20' },
-]
-
-export default function BlinksPage() {
+export default function BlinksOverviewPage() {
   const router = useRouter()
   const { publicKey } = useWallet()
   const { toast } = useToast()
@@ -51,12 +44,12 @@ export default function BlinksPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
-    const fetchBlinks = async () => {
+    const loadBlinks = async () => {
+      if (!publicKey) return
       setIsLoading(true)
       try {
-        // In a real application, you would fetch data from an API here
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulating API delay
-        setBlinks(mockBlinks)
+        const fetchedBlinks = await fetchBlinks(publicKey.toString())
+        setBlinks(fetchedBlinks)
       } catch (error) {
         console.error('Error fetching blinks:', error)
         toast({
@@ -69,8 +62,8 @@ export default function BlinksPage() {
       }
     }
 
-    fetchBlinks()
-  }, [toast])
+    loadBlinks()
+  }, [publicKey, toast])
 
   const filteredAndSortedBlinks = useMemo(() => {
     return blinks
@@ -110,125 +103,148 @@ export default function BlinksPage() {
 
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
-          <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
-          Your BLINKs
-        </h1>
-        <div className="flex items-center space-x-4">
-          <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: iconColor}} />
-            Back to Main
-          </Button>
-          <WalletButton />
-          <Button onClick={handleCreateBlink} disabled={!publicKey}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Blink
-          </Button>
-        </div>
-      </div>
-
-      {!publicKey && (
-        <Alert className="mb-6">
-          <AlertCircle className="h-4 w-4" style={{ color: iconColor }} />
-          <AlertTitle>Wallet not connected</AlertTitle>
-          <AlertDescription>
-            Please connect your wallet to view and manage your Blinks.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Blinks</CardTitle>
-          <CardDescription>View and manage all your created Blinks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search Blinks"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <div className="flex space-x-2 w-full sm:w-auto">
-              <Select value={filterType} onValueChange={(value) => setFilterType(value as BlinkType | 'all')}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Filter by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="payment">Payment</SelectItem>
-                  <SelectItem value="gift">Gift</SelectItem>
-                  <SelectItem value="nft">NFT</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'name' | 'amount' | 'createdAt')}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="amount">Amount</SelectItem>
-                  <SelectItem value="createdAt">Date</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
-              >
-                {sortOrder === 'asc' ? '↑' : '↓'}
-              </Button>
-            </div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
+            <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
+            Your BLINKs
+          </h1>
+          <div className="flex items-center space-x-4">
+            <Button onClick={handleBackToMain} variant="outline" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" style={{color: iconColor}} />
+              Back to Main
+            </Button>
+            <WalletButton />
+            <Button onClick={handleCreateBlink} disabled={!publicKey}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Blink
+            </Button>
           </div>
+        </div>
 
-          {isLoading ? (
-            <div className="text-center py-4">Loading your Blinks...</div>
-          ) : filteredAndSortedBlinks.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedBlinks.map((blink) => (
-                  <TableRow key={blink.id}>
-                    <TableCell className="font-medium">{blink.name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        {getBlinkTypeIcon(blink.type)}
-                        <span className="ml-2 capitalize">{blink.type}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{blink.amount} {blink.currency}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                        ${blink.status === 'active' ? 'bg-green-100 text-green-800' :
-                          blink.status === 'expired' ? 'bg-red-100 text-red-800' :
-                          'bg-blue-100 text-blue-800'}`}>
-                        {blink.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{new Date(blink.createdAt).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-4">No Blinks found. Create your first Blink!</div>
-          )}
-        </CardContent>
-      </Card>
+        {!publicKey && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" style={{ color: iconColor }} />
+            <AlertTitle>Wallet not connected</AlertTitle>
+            <AlertDescription>
+              Please connect your wallet to view and manage your Blinks.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Blinks</CardTitle>
+            <CardDescription>View and manage all your created Blinks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search Blinks"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <div className="flex space-x-2 w-full sm:w-auto">
+                <Select value={filterType} onValueChange={(value) => setFilterType(value as BlinkType | 'all')}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Filter by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="payment">Payment</SelectItem>
+                    <SelectItem value="gift">Gift</SelectItem>
+                    <SelectItem value="nft">NFT</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'name' | 'amount' | 'createdAt')}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="amount">Amount</SelectItem>
+                    <SelectItem value="createdAt">Date</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : filteredAndSortedBlinks.length > 0 ? (
+              <AnimatePresence>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAndSortedBlinks.map((blink) => (
+                      <motion.tr
+                        key={blink.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <TableCell className="font-medium">{blink.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {getBlinkTypeIcon(blink.type)}
+                            <span className="ml-2 capitalize">{blink.type}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{blink.amount} {blink.currency}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                            ${blink.status === 'active' ? 'bg-green-100 text-green-800' :
+                              blink.status === 'expired' ? 'bg-red-100 text-red-800' :
+                              'bg-blue-100 text-blue-800'}`}>
+                            {blink.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{new Date(blink.createdAt).toLocaleDateString()}</TableCell>
+                      </motion.tr>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AnimatePresence>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-lg font-semibold mb-2">No Blinks found</p>
+                <p className="text-gray-500 mb-4">Create your first Blink to get started!</p>
+                <Button onClick={handleCreateBlink}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Blink
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   )
 }

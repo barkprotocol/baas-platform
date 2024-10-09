@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server'
+import { stringify } from 'csv-stringify/sync'
+
+// Simulated data fetching function
+async function fetchAnalyticsData() {
+  // In a real application, this would fetch data from a database or external API
+  return {
+    tokenHolders: [
+      { address: 'Ej4qxzA1V5Vu4bqmUeS6h7mXQ9FGgntpjxs3xTGSHtLo', balance: 100000000, percentage: 10, barkBalance: 1000000, usdcBalance: 50000 },
+      { address: 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH', balance: 75000000, percentage: 7.5, barkBalance: 750000, usdcBalance: 37500 },
+      { address: '7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2', balance: 50000000, percentage: 5, barkBalance: 500000, usdcBalance: 25000 },
+      { address: 'AHenhqETCvvGGzjXzwUf1xj3CmECVkV8Van6Qb9UVHwn', balance: 25000000, percentage: 2.5, barkBalance: 250000, usdcBalance: 12500 },
+      { address: '6FNyGFZ1mLgdE9fCHxkhgP2nVD5Bsj7EwHKKNrQZrVx4', balance: 10000000, percentage: 1, barkBalance: 100000, usdcBalance: 5000 },
+    ],
+    users: [
+      { id: 1, username: 'user1', email: 'user1@example.com', joinDate: '2024-01-01', solanaAddress: 'Ej4qxzA1V5Vu4bqmUeS6h7mXQ9FGgntpjxs3xTGSHtLo' },
+      { id: 2, username: 'user2', email: 'user2@example.com', joinDate: '2024-02-15', solanaAddress: 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH' },
+      { id: 3, username: 'user3', email: 'user3@example.com', joinDate: '2024-03-30', solanaAddress: '7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2' },
+    ],
+    accounts: [
+      { id: 1, userId: 1, solBalance: 10.5, barkBalance: 1000, usdcBalance: 500, lastTransaction: '2024-05-01' },
+      { id: 2, userId: 2, solBalance: 25.75, barkBalance: 2500, usdcBalance: 1250, lastTransaction: '2024-05-02' },
+      { id: 3, userId: 3, solBalance: 5.25, barkBalance: 500, usdcBalance: 250, lastTransaction: '2024-05-03' },
+    ],
+    tokenMetrics: {
+      barkTotalSupply: 1000000000,
+      barkCirculatingSupply: 750000000,
+      barkPrice: 0.05, // in USDC
+      barkMarketCap: 37500000, // in USDC
+      barkVolume24h: 1000000, // in USDC
+    },
+  }
+}
+
+export async function GET() {
+  try {
+    const data = await fetchAnalyticsData()
+
+    const csvData = [
+      ['BARK Token Metrics'],
+      ['Total Supply', 'Circulating Supply', 'Price (USDC)', 'Market Cap (USDC)', '24h Volume (USDC)'],
+      [
+        data.tokenMetrics.barkTotalSupply,
+        data.tokenMetrics.barkCirculatingSupply,
+        data.tokenMetrics.barkPrice,
+        data.tokenMetrics.barkMarketCap,
+        data.tokenMetrics.barkVolume24h,
+      ],
+      [],
+      ['Token Holders'],
+      ['Solana Address', 'SOL Balance', 'Percentage', 'BARK Balance', 'USDC Balance'],
+      ...data.tokenHolders.map(holder => [
+        holder.address,
+        holder.balance,
+        holder.percentage,
+        holder.barkBalance,
+        holder.usdcBalance,
+      ]),
+      [],
+      ['Users'],
+      ['ID', 'Username', 'Email', 'Join Date', 'Solana Address'],
+      ...data.users.map(user => [
+        user.id,
+        user.username,
+        user.email,
+        user.joinDate,
+        user.solanaAddress,
+      ]),
+      [],
+      ['Accounts'],
+      ['ID', 'User ID', 'SOL Balance', 'BARK Balance', 'USDC Balance', 'Last Transaction'],
+      ...data.accounts.map(account => [
+        account.id,
+        account.userId,
+        account.solBalance,
+        account.barkBalance,
+        account.usdcBalance,
+        account.lastTransaction,
+      ]),
+    ]
+
+    const csv = stringify(csvData)
+
+    return new NextResponse(csv, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename=bark_protocol_analytics.csv',
+      },
+    })
+  } catch (error) {
+    console.error('Error generating CSV:', error)
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    )
+  }
+}

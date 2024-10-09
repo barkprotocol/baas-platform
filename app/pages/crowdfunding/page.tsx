@@ -18,8 +18,22 @@ import { useWallet } from '@solana/wallet-adapter-react'
 // Mock Solana connection (replace with actual connection in production)
 const connection = new Connection('https://api.devnet.solana.com', 'confirmed')
 
+// Define the Campaign type
+interface Campaign {
+  id: number;
+  title: string;
+  description: string;
+  goal: number;
+  raised: number;
+  backers: number;
+  daysLeft: number;
+  image: string;
+  programId: string;
+  escrowAddress: string;
+}
+
 // Mock API functions (replace with actual API calls)
-const fetchCampaigns = async () => new Promise(resolve => setTimeout(() => resolve([
+const fetchCampaigns = async (): Promise<Campaign[]> => new Promise(resolve => setTimeout(() => resolve([
   { id: 1, title: 'Community Garden Project', description: 'Help us create a sustainable community garden', goal: 10000, raised: 7500, backers: 150, daysLeft: 15, image: '/placeholder.svg?height=200&width=400', programId: 'Program1111111111111111111111111111111111111', escrowAddress: 'Escrow11111111111111111111111111111111111111' },
   { id: 2, title: 'Tech Education for Kids', description: 'Provide coding classes for underprivileged children', goal: 15000, raised: 9000, backers: 200, daysLeft: 20, image: '/placeholder.svg?height=200&width=400', programId: 'Program2222222222222222222222222222222222222', escrowAddress: 'Escrow22222222222222222222222222222222222222' },
   { id: 3, title: 'Clean Energy Initiative', description: 'Fund solar panel installations in rural areas', goal: 25000, raised: 18000, backers: 300, daysLeft: 10, image: '/placeholder.svg?height=200&width=400', programId: 'Program3333333333333333333333333333333333333', escrowAddress: 'Escrow33333333333333333333333333333333333333' },
@@ -34,9 +48,9 @@ export default function CrowdfundingPage() {
   const router = useRouter()
   const { toast } = useToast()
   const wallet = useWallet()
-  const [campaigns, setCampaigns] = useState<any[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedCampaign, setSelectedCampaign] = useState<any>(null)
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [contributionAmount, setContributionAmount] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -53,7 +67,10 @@ export default function CrowdfundingPage() {
     try {
       const data = await fetchCampaigns()
       setCampaigns(data)
-      setShowProgramDetails(data.reduce((acc, campaign) => ({ ...acc, [campaign.id]: false }), {}))
+      setShowProgramDetails(data.reduce((acc: { [key: number]: boolean }, campaign) => {
+        acc[campaign.id] = false;
+        return acc;
+      }, {}))
     } catch (error) {
       toast({
         title: "Error",
@@ -260,7 +277,7 @@ export default function CrowdfundingPage() {
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleContribute}>
-                        <div className="grid gap-4 py-4">
+                        <div className="grid gap-4  py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="amount" className="text-right">Amount (SOL)</Label>
                             <Input

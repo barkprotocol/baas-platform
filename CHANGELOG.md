@@ -5,7 +5,23 @@ All notable changes to the BARK BaaS Platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.3] - 2024-06-15
+## [0.1.4] - 2024-10-9
+
+1. Added BARK token balances and USDC balances to the token holders data.
+2. Updated the users data to include Solana addresses.
+3. Modified the accounts data to include SOL, BARK, and USDC balances.
+4. Added a new `tokenMetrics` section with BARK-specific information such as total supply, circulating supply, price, market cap, and 24-hour volume.
+5. Updated the CSV output to reflect these new data points, providing a more comprehensive view of the BARK protocol ecosystem.
+
+
+The CSV file now includes the following sections:
+
+1. BARK Token Metrics
+2. Token Holders (with SOL, BARK, and USDC balances)
+3. Users (with Solana addresses)
+4. Accounts (with SOL, BARK, and USDC balances)
+
+## [0.1.3] - 2024-10-6
 
 ### Added
 - Implemented Solana actions and donation system for SOL, USDC, and BARK tokens
@@ -48,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected theme color configuration in metadata
 - Addressed warnings related to deprecated Next.js configuration options
 
-## [0.1.2] - 2024-04-20
+## [0.1.2] - 2024-09-20
 
 ### Added
 - Initial project setup with Next.js framework
@@ -105,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Addressed edge cases in token balance calculations
 - Fixed inconsistencies in error handling across different modules
 
-## [0.1.0] - 2024-03-10
+## [0.1.0] - 2024-09-10
 
 ### Added
 - Initial alpha release of BARK BaaS Platform

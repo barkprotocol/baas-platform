@@ -1,16 +1,27 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from '@/components/ui/button'
 import { Loader2, Wallet } from 'lucide-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { cn } from '@/lib/utils'
+import dynamic from 'next/dynamic'
+
+const DynamicWalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
+  { ssr: false }
+)
 
 export function WalletButton() {
   const { wallet, connect, disconnect, connecting, connected, publicKey } = useWallet()
   const { setVisible } = useWalletModal()
   const [isConnecting, setIsConnecting] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleConnectOrSelect = useCallback(async () => {
     if (connecting) return
@@ -40,6 +51,19 @@ export function WalletButton() {
     "font-regular px-4 py-2 rounded-md transition-all duration-200 ease-in-out",
     "transform hover:scale-100 focus:outline-none focus:ring-1 focus:ring-[#D0BFB4] focus:ring-opacity-60"
   )
+
+  if (!mounted) {
+    return (
+      <Button
+        variant="outline"
+        className={buttonClasses}
+        disabled
+      >
+        <Wallet className="mr-2 h-4 w-4" aria-hidden="true" />
+        <span>Connect Wallet</span>
+      </Button>
+    )
+  }
 
   if (connected && publicKey) {
     return (
@@ -72,7 +96,7 @@ export function WalletButton() {
       ) : (
         <>
           <Wallet className="mr-2 h-4 w-4" aria-hidden="true" />
-          <span>{wallet ? 'Connect' : 'Select Wallet'}</span>
+          <span>Connect Wallet</span>
         </>
       )}
     </Button>

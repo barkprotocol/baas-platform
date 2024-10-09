@@ -6,7 +6,7 @@ import {
   ActionPostRequest,
   ActionPostResponse, LinkedAction,
 } from '@solana/actions';
-import jupiterApi from '../../../api/jupiter-api';
+import jupiterApi from '../../../api/v1/jupiter-swap';
 import { Hono } from 'hono';
 
 const SANCTUM_ACTION_ICON =

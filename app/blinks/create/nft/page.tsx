@@ -3,16 +3,18 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Image as ImageIcon, Plus, Trash2 } from 'lucide-react'
-import { WalletButton } from "@/components/ui/wallet-button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Wallet } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ArrowLeft, Image as ImageIcon, Plus, Trash2, Wallet, Loader2 } from 'lucide-react'
+import { WalletButton } from "@/components/ui/wallet-button"
 import { useToast } from "@/components/ui/use-toast"
 
 interface Attribute {
@@ -26,6 +28,8 @@ export default function CreateNFTBlinkPage() {
   const [image, setImage] = useState<File | null>(null)
   const [attributes, setAttributes] = useState<Attribute[]>([{ trait_type: '', value: '' }])
   const [supply, setSupply] = useState('1')
+  const [isLoading, setIsLoading] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
   const { publicKey } = useWallet()
   const router = useRouter()
   const { toast } = useToast()
@@ -51,8 +55,13 @@ export default function CreateNFTBlinkPage() {
     setAttributes(newAttributes)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setShowConfirmation(true)
+  }
+
+  const handleConfirmedSubmit = async () => {
+    setIsLoading(true)
     try {
       const formData = new FormData()
       formData.append('name', name)
@@ -60,7 +69,7 @@ export default function CreateNFTBlinkPage() {
       if (image) {
         formData.append('image', image)
       }
-      formData.append('attributes', JSON.stringify(attributes))
+      formData.append('attributes', JSON.stringify(attributes.filter(attr => attr.trait_type && attr.value)))
       formData.append('supply', supply)
 
       const response = await fetch('/api/blinks/nft', {
@@ -83,13 +92,18 @@ export default function CreateNFTBlinkPage() {
         description: error instanceof Error ? error.message : "An error occurred while creating the NFT Blink",
         variant: "destructive",
       })
+    } finally {
+      setIsLoading(false)
+      setShowConfirmation(false)
     }
   }
 
+  const isFormValid = name && description && image && supply && attributes.some(attr => attr.trait_type && attr.value)
+
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Create NFT Blink</h1>
+      <header className="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold mb-4 sm:mb-0">Create NFT Blink</h1>
         <div className="flex items-center space-x-4">
           <WalletButton />
           <Button asChild variant="outline">
@@ -111,90 +125,129 @@ export default function CreateNFTBlinkPage() {
             </AlertDescription>
           </Alert>
         ) : (
-          <motion.form
-            onSubmit={handleSubmit}
-            className="space-y-6 max-w-md mx-auto"
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            <div>
-              <Label htmlFor="name">NFT Name</Label>
-              <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter NFT name"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter NFT description"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="image">Upload Image</Label>
-              <Input
-                id="image"
-                type="file"
-                onChange={handleImageChange}
-                accept="image/*"
-                required
-              />
-              {image && (
-                <div className="mt-2">
-                  <img src={URL.createObjectURL(image)} alt="NFT Preview" className="max-w-full h-auto" />
-                </div>
-              )}
-            </div>
-            <div>
-              <Label>Attributes</Label>
-              {attributes.map((attr, index) => (
-                <div key={index} className="flex space-x-2 mt-2">
-                  <Input
-                    placeholder="Trait"
-                    value={attr.trait_type}
-                    onChange={(e) => handleAttributeChange(index, 'trait_type', e.target.value)}
-                  />
-                  <Input
-                    placeholder="Value"
-                    value={attr.value}
-                    onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
-                  />
-                  <Button type="button" variant="outline" onClick={() => removeAttribute(index)}>
-                    <Trash2 className="h-4 w-4" />
+            <Card>
+              <CardHeader>
+                <CardTitle>Create an NFT Blink</CardTitle>
+                <CardDescription>Fill in the details to create your NFT Blink</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">NFT Name</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter NFT name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Enter NFT description"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="image">Upload Image</Label>
+                    <Input
+                      id="image"
+                      type="file"
+                      onChange={handleImageChange}
+                      accept="image/*"
+                      required
+                    />
+                    {image && (
+                      <div className="mt-2 relative w-full h-64">
+                        <Image
+                          src={URL.createObjectURL(image)}
+                          alt="NFT Preview"
+                          fill
+                          style={{ objectFit: 'contain' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Attributes</Label>
+                    {attributes.map((attr, index) => (
+                      <div key={index} className="flex space-x-2 mt-2">
+                        <Input
+                          placeholder="Trait"
+                          value={attr.trait_type}
+                          onChange={(e) => handleAttributeChange(index, 'trait_type', e.target.value)}
+                          aria-label={`Attribute ${index + 1} Trait`}
+                        />
+                        <Input
+                          placeholder="Value"
+                          value={attr.value}
+                          onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
+                          aria-label={`Attribute ${index + 1} Value`}
+                        />
+                        <Button type="button" variant="outline" onClick={() => removeAttribute(index)} aria-label={`Remove Attribute ${index + 1}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" onClick={addAttribute} className="mt-2">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Attribute
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supply">Supply</Label>
+                    <Input
+                      id="supply"
+                      type="number"
+                      value={supply}
+                      onChange={(e) => setSupply(e.target.value)}
+                      min="1"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={!isFormValid || isLoading}>
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Create NFT Blink
                   </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addAttribute} className="mt-2">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Attribute
-              </Button>
-            </div>
-            <div>
-              <Label htmlFor="supply">Supply</Label>
-              <Input
-                id="supply"
-                type="number"
-                value={supply}
-                onChange={(e) => setSupply(e.target.value)}
-                min="1"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              <ImageIcon className="mr-2 h-4 w-4" />
-              Create NFT Blink
-            </Button>
-          </motion.form>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
       </main>
+
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm NFT Blink Creation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to create this NFT Blink? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmation(false)}>Cancel</Button>
+            <Button onClick={handleConfirmedSubmit} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Confirm'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

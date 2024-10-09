@@ -11,24 +11,28 @@ The platform offers a comprehensive API, user-friendly interface, and payment in
 
 ## Key Features
 
-- **Solana Blinks**: Create, send, and receive Solana blinks for seamless transactions and interactions to enhance user experience.
-- **Blink Transactions**: Streamlined transaction processes to enhance user experience.
-- **Commerce**: Built-in support for gift, donation, and crowdfunding functionalities.
-- **User & Asset Management**: Efficient management of SPL tokens, including BARK, minting, transferring, and burning.
-- **Staking Mechanisms**: Allow users to stake NFTs and tokens and earn rewards.
-- **NFT Minting**: Easy creation and management of compressed NFTs (CNFT) on the Solana blockchain.
-- **NFT Marketplace**: A dedicated marketplace for users to trade and manage their NFTs.
-- **Social Finance**: Tools for community engagement, fundraising, and collaborative financial projects.
-- **Web3 Payments**: Solana Pay and QR-code payments integrations
-- **Wallet Management**: Simplified wallet connections for users with support for popular Solana wallets.
-- **Solana login features**: Secure and efficient user authentication using Solana wallets, enabling a seamless login experience for decentralized applications.
-- **Governance**: The BARK Governance DAO (Decentralized Autonomous Organization) is a pivotal part of the BARK Protocol ecosystem, empowering BARK token holders to participate in the governance of the platform.
+- **Blinkboard(s) Interface**: Dashboard and user interface 
+ - **Solana Blinks**: Create, send, and receive Solana blinks for seamless transactions and interactions to enhance user experience.
+ - **Blink Transactions**: Streamlined transaction processes to enhance user experience.
+ - **Commerce**: Built-in support for gift, donation, and crowdfunding functionalities.
+ - **User & Asset Management**: Efficient management of SPL tokens, including BARK, minting, transferring, and burning.
+ - **Staking Mechanisms**: Allow users to stake NFTs and tokens and earn rewards.
+ - **NFT Minting**: Easy creation and management of compressed NFTs (CNFT) on the Solana blockchain.
+ - **NFT Marketplace**: A dedicated marketplace for users to trade and manage their NFTs.
+ - **Social Finance**: Tools for community engagement, fundraising, and collaborative financial projects.
+ - **Web3 Payments**: Solana Pay and QR-code payments integrations
+ - **Wallet Management**: Simplified wallet connections for users with support for popular Solana wallets.
+ - **Solana login features**: Secure and efficient user authentication using Solana wallets, enabling a seamless login experience for decentralized applications.
+ - **Governance**: The BARK Governance DAO (Decentralized Autonomous Organization) is a pivotal part of the BARK Protocol ecosystem, empowering BARK token holders to participate in the governance of the platform.
 
-## Blinkboard Packages
+## Blinkboard & Pricing Packages
 
-- Basic
-- Pro
-- Enterprice
+"Get Started" page for the BARK Protocol platform. It includes all the functionality described in the original code, with forms for creating Blinks, processing donations, making payments, minting NFTs, starting crowdfunding campaigns, sending gifts, and setting up merchant accounts. The component uses various UI components from a custom UI library and includes form handling, API calls (mocked), and state management.
+
+- 1. Basic (current): Free 
+- 2. Starter
+- 3. Pro
+- 4. Enterprice
 
 ### UI/UX Actions & Blinks
 

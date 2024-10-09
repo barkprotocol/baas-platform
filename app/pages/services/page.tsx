@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, Zap, Coins, Code, Gift, Repeat, Paintbrush, ArrowRight, Search, ArrowLeft, Moon, Sun, Info } from 'lucide-react'
@@ -108,42 +108,49 @@ const services = [
 export default function ServicesPage() {
   const [activeTab, setActiveTab] = useState("actions-&-blinks")
   const [searchTerm, setSearchTerm] = useState("")
-  const [filteredServices, setFilteredServices] = useState(services)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const { toast } = useToast()
 
+  // Memoize filtered services to improve performance
+  const filteredServices = useMemo(() => {
+    return services.filter(service =>
+      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.features.some(feature => feature.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+  }, [searchTerm])
+
   const handleSearch = useCallback((term: string) => {
-    try {
-      const filtered = services.filter(service =>
-        service.title.toLowerCase().includes(term.toLowerCase()) ||
-        service.description.toLowerCase().includes(term.toLowerCase()) ||
-        service.features.some(feature => feature.toLowerCase().includes(term.toLowerCase()))
-      )
-      setFilteredServices(filtered)
-      if (filtered.length > 0) {
-        setActiveTab(filtered[0].title.toLowerCase().replace(/\s+/g, '-'))
-      }
-    } catch (error) {
-      console.error('Error filtering services:', error)
-      toast({
-        title: "Error",
-        description: "An error occurred while searching. Please try again.",
-        variant: "destructive",
-      })
+    setSearchTerm(term)
+    if (filteredServices.length > 0) {
+      setActiveTab(filteredServices[0].title.toLowerCase().replace(/\s+/g, '-'))
     }
-  }, [toast])
+  }, [filteredServices])
 
   useEffect(() => {
-    handleSearch(searchTerm)
-  }, [searchTerm, handleSearch])
+    const savedDarkMode = localStorage.getItem('darkMode')
+    if (savedDarkMode) {
+      setIsDarkMode(JSON.parse(savedDarkMode))
+    }
+  }, [])
 
   useEffect(() => {
     document.body.classList.toggle('dark', isDarkMode)
+    localStorage.setItem('darkMode', JSON.stringify(isDarkMode))
   }, [isDarkMode])
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
+    setIsDarkMode(prev => !prev)
   }
+
+  const handleServiceAction = useCallback((service: string) => {
+    // Simulating an API call or action
+    toast({
+      title: "Service Action",
+      description: `You've interacted with the ${service} service. This is where we'd handle the specific action.`,
+      duration: 3000,
+    })
+  }, [toast])
 
   return (
     <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-sand-900 text-sand-100' : 'bg-sand-50 text-sand-900'}`}>
@@ -195,7 +202,7 @@ export default function ServicesPage() {
               type="text"
               placeholder="Search services..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className={`pl-10 ${isDarkMode ? 'bg-sand-800 border-sand-700' : 'bg-white border-sand-200'} focus:border-sand-400`}
               aria-label="Search services"
             />
@@ -296,6 +303,12 @@ export default function ServicesPage() {
                                 <div className="mt-4">
                                   <p>For more information or to get started with {service.title}, please contact our sales team.</p>
                                 </div>
+                                <Button 
+                                  className="w-full mt-4 bg-sand-600 hover:bg-sand-700 text-white"
+                                  onClick={() => handleServiceAction(service.title)}
+                                >
+                                  Get Started
+                                </Button>
                               </DialogContent>
                             </Dialog>
                           </TooltipTrigger>
@@ -327,7 +340,7 @@ export default function ServicesPage() {
       </main>
 
       <footer className={`py-8 ${isDarkMode ? 'bg-sand-800' : 'bg-sand-100'}`}>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto  px-4">
           <div className="flex justify-center items-center">
             <p className={`text-sm ${isDarkMode ? 'text-sand-300' : 'text-sand-600'}`}>
               Powered by Solana

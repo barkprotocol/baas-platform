@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import * as anchor from '@coral-xyz/anchor'
 import QRCode from 'qrcode'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,6 +26,7 @@ import { Progress } from "@/components/ui/progress"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { tokenIcons, PROGRAM_ID, IDL } from '@/lib/constants'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 // Initialize Solana connection (replace with your RPC endpoint)
 const connection = new Connection('https://api.mainnet-beta.solana.com')
@@ -33,43 +37,50 @@ const titleIconUrl = "https://ucarecdn.com/f242e5dc-8813-47b4-af80-6e6dd43945a9/
 type RecurringFrequency = 'daily' | 'weekly' | 'monthly'
 type TokenType = keyof typeof tokenIcons
 
-interface PaymentBlinkFormData {
-  name: string
-  amount: string
-  description: string
-  expirationDays: number
-  isRecurring: boolean
-  recurringFrequency: RecurringFrequency
-  selectedToken: TokenType
-  image: File | null
-  recipientEmail: string
-}
+const formSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  amount: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: 'Amount must be greater than 0',
+  }),
+  description: z.string().optional(),
+  expirationDays: z.number().min(1).max(30),
+  isRecurring: z.boolean(),
+  recurringFrequency: z.enum(['daily', 'weekly', 'monthly']),
+  selectedToken: z.enum(['SOL', 'USDC', 'BARK']),
+  recipientEmail: z.string().email().optional().or(z.literal('')),
+})
 
-const initialFormData: PaymentBlinkFormData = {
-  name: '',
-  amount: '',
-  description: '',
-  expirationDays: 7,
-  isRecurring: false,
-  recurringFrequency: 'monthly',
-  selectedToken: 'SOL',
-  image: null,
-  recipientEmail: '',
-}
+type FormData = z.infer<typeof formSchema>
 
 export default function CreatePaymentBlinkPage() {
   const router = useRouter()
   const { publicKey, signTransaction } = useWallet()
   const { toast } = useToast()
-  const [formData, setFormData] = useState<PaymentBlinkFormData>(initialFormData)
   const [isLoading, setIsLoading] = useState(false)
   const [isImageUploading, setIsImageUploading] = useState(false)
   const [isBlinkVisible, setIsBlinkVisible] = useState(true)
   const [progress, setProgress] = useState(0)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
-  const [formErrors, setFormErrors] = useState<Partial<PaymentBlinkFormData>>({})
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [image, setImage] = useState<File | null>(null)
+
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      amount: '',
+      description: '',
+      expirationDays: 7,
+      isRecurring: false,
+      recurringFrequency: 'monthly',
+      selectedToken: 'SOL',
+      recipientEmail: '',
+    },
+  })
+
+  const watchName = watch('name')
+  const watchAmount = watch('amount')
+  const watchSelectedToken = watch('selectedToken')
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -99,28 +110,9 @@ export default function CreatePaymentBlinkPage() {
 
   useEffect(() => {
     generateQRCode()
-  }, [formData.name, formData.amount, formData.selectedToken])
+  }, [watchName, watchAmount, watchSelectedToken])
 
   const handleBackToBlinks = useCallback(() => router.push('/blinks'), [router])
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    validateField(name, value)
-  }, [])
-
-  const handleSelectChange = useCallback((name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }))
-    validateField(name, value)
-  }, [])
-
-  const handleSwitchChange = useCallback((checked: boolean) => {
-    setFormData(prev => ({ ...prev, isRecurring: checked }))
-  }, [])
-
-  const handleSliderChange = useCallback((value: number[]) => {
-    setFormData(prev => ({ ...prev, expirationDays: value[0] }))
-  }, [])
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -128,7 +120,7 @@ export default function CreatePaymentBlinkPage() {
       const file = e.target.files[0]
       const reader = new FileReader()
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, image: file }))
+        setImage(file)
         setIsImageUploading(false)
       }
       reader.readAsDataURL(file)
@@ -136,8 +128,8 @@ export default function CreatePaymentBlinkPage() {
   }, [])
 
   const generateQRCode = useCallback(async () => {
-    if (formData.name && formData.amount && formData.selectedToken) {
-      const blinkUrl = `https://blinks.barkprotocol.com/payment/${formData.name}?amount=${formData.amount}&token=${formData.selectedToken}`
+    if (watchName && watchAmount && watchSelectedToken) {
+      const blinkUrl = `https://blinks.barkprotocol.com/payment/${watchName}?amount=${watchAmount}&token=${watchSelectedToken}`
       try {
         const qrCodeDataUrl = await QRCode.toDataURL(blinkUrl)
         setQrCodeUrl(qrCodeDataUrl)
@@ -145,40 +137,9 @@ export default function CreatePaymentBlinkPage() {
         console.error('Error generating QR code:', error)
       }
     }
-  }, [formData.name, formData.amount, formData.selectedToken])
+  }, [watchName, watchAmount, watchSelectedToken])
 
-  const validateField = useCallback((name: string, value: string) => {
-    let errors = { ...formErrors }
-    switch (name) {
-      case 'name':
-        if (!value.trim()) {
-          errors.name = 'Name is required'
-        } else {
-          delete errors.name
-        }
-        break
-      case 'amount':
-        if (!value || parseFloat(value) <= 0) {
-          errors.amount = 'Amount must be greater than 0'
-        } else {
-          delete errors.amount
-        }
-        break
-      case 'recipientEmail':
-        if (value && !/\S+@\S+\.\S+/.test(value)) {
-          errors.recipientEmail = 'Invalid email address'
-        } else {
-          delete errors.recipientEmail
-        }
-        break
-      default:
-        break
-    }
-    setFormErrors(errors)
-  }, [formErrors])
-
-  const handleCreateBlink = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = useCallback((data: FormData) => {
     setIsConfirmDialogOpen(true)
   }, [])
 
@@ -202,18 +163,15 @@ export default function CreatePaymentBlinkPage() {
       // Create a new account for the Blink
       const blinkAccount = anchor.web3.Keypair.generate()
 
-      // Calculate the creation fee (0.2% + Solana fee)
-      const creationFee = parseFloat(formData.amount) * 0.002 + 0.000005 // Assuming 0.000005 SOL as Solana fee
-
       // Create the transaction
       const tx = await program.methods.createPaymentBlink(
-        formData.name,
-        formData.description,
-        new anchor.BN(parseFloat(formData.amount) * LAMPORTS_PER_SOL),
-        formData.selectedToken,
-        formData.expirationDays,
-        formData.isRecurring,
-        formData.recurringFrequency
+        watchName,
+        watch('description'),
+        new anchor.BN(parseFloat(watchAmount) * LAMPORTS_PER_SOL),
+        watchSelectedToken,
+        watch('expirationDays'),
+        watch('isRecurring'),
+        watch('recurringFrequency')
       )
       .accounts({
         blink: blinkAccount.publicKey,
@@ -225,7 +183,7 @@ export default function CreatePaymentBlinkPage() {
 
       toast({
         title: "Payment Blink Created",
-        description: `Your Payment Blink "${formData.name}" has been created successfully!`,
+        description: `Your Payment Blink "${watchName}" has been created successfully!`,
       })
 
       router.push('/blinks')
@@ -241,10 +199,11 @@ export default function CreatePaymentBlinkPage() {
       setProgress(100)
       setIsConfirmDialogOpen(false)
     }
-  }, [publicKey, signTransaction, formData, router, toast])
+  }, [publicKey, signTransaction, watchName, watchAmount, watchSelectedToken, watch, router, toast])
 
   const handleSendBlink = useCallback(async () => {
-    if (!formData.recipientEmail) {
+    const recipientEmail = watch('recipientEmail')
+    if (!recipientEmail) {
       toast({
         title: "Recipient Email Required",
         description: "Please enter a recipient email address to send the Payment Blink.",
@@ -260,7 +219,7 @@ export default function CreatePaymentBlinkPage() {
 
       toast({
         title: "Payment Blink Sent",
-        description: `Your Payment Blink has been sent to ${formData.recipientEmail}`,
+        description: `Your Payment Blink has been sent to ${recipientEmail}`,
       })
     } catch (error) {
       console.error('Error sending Payment Blink:', error)
@@ -272,356 +231,369 @@ export default function CreatePaymentBlinkPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [formData.recipientEmail, toast])
+  }, [watch, toast])
 
   const handleSaveDraft = useCallback(() => {
-    localStorage.setItem('paymentBlinkDraft', JSON.stringify(formData))
+    localStorage.setItem('paymentBlinkDraft', JSON.stringify(watch()))
     toast({
       title: "Draft Saved",
       description: "Your Payment Blink draft has been saved.",
     })
-  }, [formData, toast])
+  }, [watch, toast])
 
   const loadDraft = useCallback(() => {
     const draft = localStorage.getItem('paymentBlinkDraft')
     if (draft) {
-      setFormData(JSON.parse(draft))
+      const parsedDraft = JSON.parse(draft)
+      Object.entries(parsedDraft).forEach(([key, value]) => {
+        setValue(key as keyof FormData, value)
+      })
       toast({
         title: "Draft Loaded",
         description: "Your saved Payment Blink draft has been loaded.",
       })
     }
-  }, [toast])
-
-  const isFormValid = useMemo(() => {
-    return formData.name.trim() !== '' && parseFloat(formData.amount) > 0 && Object.keys(formErrors).length === 0
-  }, [formData.name, formData.amount, formErrors])
+  }, [setValue, toast])
 
   const creationFee = useMemo(() => {
-    return parseFloat(formData.amount) * 0.002 + 0.000005
-  }, [formData.amount])
-
-  useEffect(() => {
-    if (canvasRef.current && formData.image && qrCodeUrl) {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        const img = new Image()
-        img.onload = () => {
-          canvas.width = img.width
-          canvas.height = img.height
-          ctx.drawImage(img, 0, 0)
-
-          const qrImg = new Image()
-          qrImg.onload = () => {
-            const qrSize = Math.min(canvas.width, canvas.height) / 4
-            ctx.drawImage(qrImg, canvas.width - qrSize - 10, 10, qrSize, qrSize)
-          }
-          qrImg.src = qrCodeUrl
-        }
-        img.src = URL.createObjectURL(formData.image)
-      }
-    }
-  }, [formData.image, qrCodeUrl])
+    return parseFloat(watchAmount || '0') * 0.002 + 0.000005
+  }, [watchAmount])
 
   return (
-    <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
-          <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
-          Create Payment 
-          <span className={`ml-2 transition-opacity duration-300 ${isBlinkVisible ? 'opacity-100' : 'opacity-30'}`}>
-            BLINK
-          </span>
-        </h1>
-        <div className="flex items-center space-x-4">
-          <WalletButton />
-          <Button onClick={handleBackToBlinks} variant="outline" className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
-            <span className="sr-only">Back to </span>Blinks
-          </Button>
+    <ErrorBoundary>
+      <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold flex items-center">
+            <Image src={titleIconUrl} alt="BARK BLINKS icon" width={32} height={32} className="mr-2" />
+            Create Payment 
+            <span className={`ml-2 transition-opacity duration-300 ${isBlinkVisible ? 'opacity-100' : 'opacity-30'}`}>
+              BLINK
+            </span>
+          </h1>
+          <div className="flex items-center space-x-4">
+            <WalletButton />
+            <Button onClick={handleBackToBlinks} variant="outline" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" style={{ color: iconColor }} aria-hidden="true" />
+              <span className="sr-only">Back to </span>Blinks
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <Alert className="mb-6">
-        <AlertCircle className="h-4 w-4" style={{ color: iconColor }} />
-        <AlertTitle>Create a New Payment Blink</AlertTitle>
-        <AlertDescription>
-          Fill in the details below to create a new Payment Blink for instant transactions on Solana.
-        </AlertDescription>
-      </Alert>
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" style={{ color: iconColor }} />
+          <AlertTitle>Create a New Payment Blink</AlertTitle>
+          <AlertDescription>
+            Fill in the details below to create a new Payment Blink for instant transactions on Solana.
+          </AlertDescription>
+        </Alert>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Blink Details</CardTitle>
-          <CardDescription>Configure your new Payment Blink with the options below.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateBlink} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Blink Name</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="Enter Payment Blink name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                aria-label="Payment Blink Name"
-                aria-invalid={!!formErrors.name}
-                aria-describedby="name-error"
-              />
-              {formErrors.name && <p id="name-error" className="text-sm text-red-500">{formErrors.name}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
-              <div className="flex space-x-2">
-                <div className="relative flex-grow">
-                  <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    step="0.000000001"
-                    min="0"
-                    placeholder={`Enter amount in ${formData.selectedToken}`}
-                    value={formData.amount}
-                    onChange={handleInputChange}
-                    className="pl-10"
-                    required
-                    aria-label={`Amount in ${formData.selectedToken}`}
-                    aria-invalid={!!formErrors.amount}
-                    aria-describedby="amount-error"
-                  />
-                  <Image
-                    src={tokenIcons[formData.selectedToken]}
-                    alt={`${formData.selectedToken} icon`}
-                    width={24}
-                    height={24}
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2"
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Blink Details</CardTitle>
+            <CardDescription>Configure your new Payment Blink with the options below.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Blink Name</Label>
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="name"
+                      placeholder="Enter Payment Blink name"
+                      {...field}
+                      aria-invalid={!!errors.name}
+                    />
+                  )}
+                />
+                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount</Label>
+                <div className="flex space-x-2">
+                  <div className="relative flex-grow">
+                    <Controller
+                      name="amount"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          id="amount"
+                          type="number"
+                          step="0.000000001"
+                          min="0"
+                          placeholder={`Enter amount in ${watchSelectedToken}`}
+                          className="pl-10"
+                          {...field}
+                          aria-invalid={!!errors.amount}
+                        />
+                      )}
+                    />
+                    <Image
+                      src={tokenIcons[watchSelectedToken]}
+                      alt={`${watchSelectedToken} icon`}
+                      width={24}
+                      height={24}
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                    />
+                  </div>
+                  <Controller
+                    name="selectedToken"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue placeholder="Token" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(tokenIcons).map(([token, iconUrl]) => (
+                            <SelectItem key={token} value={token}>
+                              <div className="flex items-center">
+                                <Image src={iconUrl} alt={`${token} icon`} width={16} height={16} className="mr-2" />
+                                {token}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
-                <Select value={formData.selectedToken} onValueChange={(value) => handleSelectChange('selectedToken', value)}>
-                  <SelectTrigger className="w-[100px]" aria-label="Select Token">
-                    <SelectValue placeholder="Token" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(tokenIcons).map(([token, iconUrl]) => (
-                      <SelectItem key={token} value={token}>
-                        <div className="flex items-center">
-                          <Image src={iconUrl} alt={`${token} icon`} width={16} height={16} className="mr-2" />
-                          {token}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
               </div>
-              {formErrors.amount && <p id="amount-error" className="text-sm text-red-500">{formErrors.amount}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Enter a brief description for this Payment Blink"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={3}
-                aria-label="Payment Blink Description"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="image">Blink Image (Optional)</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="image"
-                  name="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  aria-label="Upload Payment Blink Image"
+              <div  className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      id="description"
+                      placeholder="Enter a brief description for this Payment Blink"
+                      {...field}
+                    />
+                  )}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="image">Blink Image (Optional)</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('image')?.click()}
+                    disabled={isImageUploading}
+                  >
+                    {isImageUploading ? (
+                      <Zap className="mr-2 h-4 w-4 animate-spin" style={{ color: iconColor }} />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" style={{ color: iconColor }} />
+                    )}
+                    {isImageUploading ? 'Uploading...' : 'Upload Image'}
+                  </Button>
+                  {image && <span className="text-sm">{image.name}</span>}
+                </div>
+              </div>
+              {image && qrCodeUrl && (
+                <div className="space-y-2">
+                  <Label>Preview with QR Code</Label>
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={URL.createObjectURL(image)}
+                      alt="Blink preview"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                    />
+                    <div className="absolute top-2 right-2 w-1/4 h-1/4">
+                      <Image
+                        src={qrCodeUrl}
+                        alt="QR Code"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="expirationDays">Expiration</Label>
+                <Controller
+                  name="expirationDays"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex items-center space-x-2">
+                      <Slider
+                        value={[field.value]}
+                        onValueChange={(value) => field.onChange(value[0])}
+                        max={30}
+                        step={1}
+                        className="flex-grow"
+                      />
+                      <span className="w-12 text-right">{field.value} days</span>
+                    </div>
+                  )}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Controller
+                  name="isRecurring"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="isRecurring"
+                    />
+                  )}
+                />
+                <Label htmlFor="isRecurring">Recurring Payment</Label>
+              </div>
+              {watch('isRecurring') && (
+                <div className="space-y-2">
+                  <Label htmlFor="recurringFrequency">Recurring Frequency</Label>
+                  <Controller
+                    name="recurringFrequency"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger id="recurringFrequency">
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="recipientEmail">Recipient Email (Optional)</Label>
+                <Controller
+                  name="recipientEmail"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="recipientEmail"
+                      type="email"
+                      placeholder="Enter recipient's email"
+                      {...field}
+                      aria-invalid={!!errors.recipientEmail}
+                    />
+                  )}
+                />
+                {errors.recipientEmail && <p className="text-sm text-red-500">{errors.recipientEmail.message}</p>}
+              </div>
+              <div className="text-sm text-muted-foreground flex items-center">
+                Creation Fee: {creationFee.toFixed(6)} SOL
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-2 cursor-pointer" style={{ color: iconColor }} />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>The creation fee includes a 0.2% platform fee and Solana network fees.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="flex space-x-4">
+                <Button 
+                  type="submit" 
+                  className="flex-1" 
+                  disabled={isLoading || !publicKey}
+                >
+                  {isLoading ? 'Creating Payment Blink...' : 'Create Payment Blink'}
+                </Button>
+                <Button 
+                  type="button" 
+                  className="flex-1" 
+                  onClick={handleSendBlink}
+                  disabled={isLoading || !watch('recipientEmail')}
+                >
+                  <Send className="mr-2 h-4 w-4" style={{ color: iconColor }} />
+                  Send Blink
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => document.getElementById('image')?.click()}
-                  disabled={isImageUploading}
+                  onClick={handleSaveDraft}
                 >
-                  {isImageUploading ? (
-                    <Zap className="mr-2 h-4 w-4 animate-spin" style={{ color: iconColor }} />
-                  ) : (
-                    <Upload className="mr-2 h-4 w-4" style={{ color: iconColor }} />
-                  )}
-                  {isImageUploading ? 'Uploading...' : 'Upload Image'}
+                  <Save className="mr-2 h-4 w-4" style={{ color: iconColor }} />
+                  Save Draft
                 </Button>
-                {formData.image && <span className="text-sm">{formData.image.name}</span>}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={loadDraft}
+                >
+                  <Upload className="mr-2 h-4 w-4" style={{ color: iconColor }} />
+                  Load Draft
+                </Button>
               </div>
-            </div>
-            {formData.image && qrCodeUrl && (
-              <div className="space-y-2">
-                <Label>Preview with QR Code</Label>
-                <canvas ref={canvasRef} className="w-full h-auto" />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="expirationDays">Expiration</Label>
-              <div className="flex items-center space-x-2">
-                <Slider
-                  id="expirationDays"
-                  value={[formData.expirationDays]}
-                  onValueChange={handleSliderChange}
-                  max={30}
-                  step={1}
-                  className="flex-grow"
-                  aria-label="Expiration Days"
-                />
-                <span className="w-12 text-right">{formData.expirationDays} days</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="isRecurring"
-                checked={formData.isRecurring}
-                onCheckedChange={handleSwitchChange}
-                aria-label="Recurring Payment Blink"
-              />
-              <Label htmlFor="isRecurring">Recurring Payment</Label>
-            </div>
-            {formData.isRecurring && (
-              <div className="space-y-2">
-                <Label htmlFor="recurringFrequency">Recurring Frequency</Label>
-                <Select value={formData.recurringFrequency} onValueChange={(value) => handleSelectChange('recurringFrequency', value)}>
-                  <SelectTrigger id="recurringFrequency" aria-label="Recurring Frequency">
-                    <SelectValue placeholder="Select frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="recipientEmail">Recipient Email (Optional)</Label>
-              <Input
-                id="recipientEmail"
-                name="recipientEmail"
-                type="email"
-                placeholder="Enter recipient's email"
-                value={formData.recipientEmail}
-                onChange={handleInputChange}
-                aria-label="Recipient Email"
-                aria-invalid={!!formErrors.recipientEmail}
-                aria-describedby="email-error"
-              />
-              {formErrors.recipientEmail && <p id="email-error" className="text-sm text-red-500">{formErrors.recipientEmail}</p>}
-            </div>
-            <div className="text-sm text-muted-foreground flex items-center">
-              Creation Fee: {creationFee.toFixed(6)} SOL
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 ml-2 cursor-pointer" style={{ color: iconColor }} />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>The creation fee includes a 0.2% platform fee and Solana network fees.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="flex space-x-4">
-              <Button 
-                type="submit" 
-                className="flex-1" 
-                disabled={isLoading || !publicKey || !isFormValid}
-                aria-label="Create Payment Blink"
-              >
-                {isLoading ? 'Creating Payment Blink...' : 'Create Payment Blink'}
-              </Button>
-              <Button 
-                type="button" 
-                className="flex-1" 
-                onClick={handleSendBlink}
-                disabled={isLoading || !isFormValid || !formData.recipientEmail}
-                aria-label="Send Payment Blink"
-              >
-                <Send className="mr-2 h-4 w-4" style={{ color: iconColor }} />
-                Send Blink
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSaveDraft}
-                aria-label="Save Draft"
-              >
-                <Save className="mr-2 h-4 w-4" style={{ color: iconColor }} />
-                Save Draft
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={loadDraft}
-                aria-label="Load Draft"
-              >
-                <Upload className="mr-2 h-4 w-4" style={{ color: iconColor }} />
-                Load Draft
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
 
-      {isLoading && (
-        <div className="mt-4">
-          <Progress value={progress} className="w-full" />
-        </div>
-      )}
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Preview Payment Blink Link</CardTitle>
-          <CardDescription>This is how your Payment Blink link will look once created.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-muted p-4 rounded-md flex items-center justify-between">
-            <code className="text-sm">
-              https://blinks.barkprotocol.com/payment/{formData.name || 'your-payment-blink-name'}
-            </code>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(`https://blinks.barkprotocol.com/payment/${formData.name || 'your-payment-blink-name'}`)
-                toast({
-                  title: "Link Copied",
-                  description: "The Payment Blink link has been copied to your clipboard.",
-                })
-              }}
-              aria-label="Copy Payment Blink Link"
-            >
-              <LinkIcon className="h-4 w-4 mr-2" style={{ color: iconColor }} />
-              Copy
-            </Button>
+        {isLoading && (
+          <div className="mt-4">
+            <Progress value={progress} className="w-full" />
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Payment Blink Creation</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to create this Payment Blink? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>Cancel</Button>
-            <Button onClick={confirmCreateBlink}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Preview Payment Blink Link</CardTitle>
+            <CardDescription>This is how your Payment Blink link will look once created.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-md flex items-center justify-between">
+              <code className="text-sm">
+                https://blinks.barkprotocol.app/payment/{watchName || 'your-payment-blink-name'}
+              </code>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://blinks.barkprotocol.app/payment/${watchName || 'your-payment-blink-name'}`)
+                  toast({
+                    title: "Link Copied",
+                    description: "The Payment Blink link has been copied to your clipboard.",
+                  })
+                }}
+              >
+                <LinkIcon className="h-4 w-4 mr-2" style={{ color: iconColor }} />
+                Copy
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Payment Blink Creation</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to create this Payment Blink? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>Cancel</Button>
+              <Button onClick={confirmCreateBlink}>Confirm</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </ErrorBoundary>
   )
 }
