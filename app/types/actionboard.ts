@@ -1,8 +1,21 @@
 import { PublicKey } from '@solana/web3.js'
 
-// Existing types
-export type ActionType = 'transfer' | 'swap' | 'stake' | 'unstake' | 'claim' | 'mint' | 'burn' | 'vote' | 'propose' | 'liquidity' | 'governance'
+// Action Types
+export enum ActionType {
+  Transfer = 'transfer',
+  Swap = 'swap',
+  Stake = 'stake',
+  Unstake = 'unstake',
+  Claim = 'claim',
+  Mint = 'mint',
+  Burn = 'burn',
+  Vote = 'vote',
+  Propose = 'propose',
+  Liquidity = 'liquidity',
+  Governance = 'governance',
+}
 
+// Base Action Interface
 export interface BaseAction {
   id: string
   name: string
@@ -19,35 +32,38 @@ export interface BaseAction {
   requiredPermissions?: string[]
 }
 
+// Specific Action Interfaces
 export interface TransferAction extends BaseAction {
-  type: 'transfer'
+  type: ActionType.Transfer
   recipientType: 'wallet' | 'contract'
 }
 
 export interface SwapAction extends BaseAction {
-  type: 'swap'
+  type: ActionType.Swap
   exchangeRate?: number
   slippageTolerance?: number
 }
 
 export interface StakeAction extends BaseAction {
-  type: 'stake'
+  type: ActionType.Stake
   lockupPeriod: number
   apr: number
 }
 
 export interface UnstakeAction extends BaseAction {
-  type: 'unstake'
+  type: ActionType.Unstake
   penaltyRate?: number
 }
 
 export interface ClaimAction extends BaseAction {
-  type: 'claim'
+  type: ActionType.Claim
   rewardType: 'token' | 'nft'
 }
 
-export type Action = TransferAction | SwapAction | StakeAction | UnstakeAction | ClaimAction
+// Action Union Type
+export type Action = TransferAction | SwapAction | StakeAction | UnstakeAction | ClaimAction;
 
+// Currency Interface
 export interface Currency {
   symbol: string
   name: string
@@ -61,7 +77,7 @@ export interface Currency {
   volume24h?: number
 }
 
-// New types for adding actions and currencies
+// New Action Input
 export interface NewActionInput {
   name: string
   description: string
@@ -75,7 +91,6 @@ export interface NewActionInput {
   icon?: string
   disabled?: boolean
   requiredPermissions?: string[]
-  // Additional fields based on action type
   recipientType?: 'wallet' | 'contract'
   exchangeRate?: number
   slippageTolerance?: number
@@ -85,6 +100,7 @@ export interface NewActionInput {
   rewardType?: 'token' | 'nft'
 }
 
+// New Currency Input
 export interface NewCurrencyInput {
   symbol: string
   name: string
@@ -98,6 +114,7 @@ export interface NewCurrencyInput {
   volume24h?: number
 }
 
+// Add Action and Currency Result Interfaces
 export interface AddActionResult {
   success: boolean
   message: string
@@ -112,7 +129,7 @@ export interface AddCurrencyResult {
   error?: string
 }
 
-// Updated ActionBoardState to include add functions
+// ActionBoard State
 export interface ActionBoardState {
   actions: Action[]
   currencies: Currency[]
@@ -125,7 +142,7 @@ export interface ActionBoardState {
   addCurrency: (newCurrency: NewCurrencyInput) => Promise<AddCurrencyResult>
 }
 
-// Existing interfaces (unchanged)
+// User Balance Interface
 export interface UserBalance {
   [symbol: string]: {
     amount: number
@@ -134,6 +151,7 @@ export interface UserBalance {
   }
 }
 
+// Action Result Interface
 export interface ActionResult {
   id: string
   success: boolean
@@ -149,6 +167,7 @@ export interface ActionResult {
   details?: Record<string, any>
 }
 
+// Filters
 export interface ActionFilter {
   types?: ActionType[]
   minAmount?: number
@@ -164,6 +183,7 @@ export interface CurrencyFilter {
   hasLocked?: boolean
 }
 
+// Settings
 export type ThemeType = 'light' | 'dark' | 'system'
 export type LanguageCode = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh'
 
@@ -179,6 +199,7 @@ export interface ActionBoardSettings {
   slippageTolerance: number
 }
 
+// Action Stats
 export interface ActionStats {
   totalActions: number
   totalVolume: number
@@ -195,6 +216,7 @@ export interface ActionStats {
   averageActionSize: number
 }
 
+// Action Handler Type
 export type ActionHandler = (
   action: Action,
   currency: Currency,
@@ -202,7 +224,7 @@ export type ActionHandler = (
   additionalParams: Record<string, any>
 ) => Promise<ActionResult>
 
-// Updated ActionBoardProps to include add functions
+// Props for Action Board
 export interface ActionBoardProps {
   initialState: ActionBoardState
   onActionComplete: (result: ActionResult) => void
@@ -220,16 +242,3 @@ export interface ActionBoardProps {
   onAddAction: (newAction: NewActionInput) => Promise<AddActionResult>
   onAddCurrency: (newCurrency: NewCurrencyInput) => Promise<AddCurrencyResult>
 }
-
-export interface ActionValidationResult {
-  isValid: boolean
-  errors: string[]
-  warnings: string[]
-}
-
-export type ActionValidator = (
-  action: Action,
-  currency: Currency,
-  amount: number,
-  userBalance: UserBalance
-) => ActionValidationResult

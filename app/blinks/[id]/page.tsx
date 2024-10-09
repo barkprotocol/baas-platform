@@ -11,8 +11,8 @@ const getBlink = async (id: string) => {
   
   // Mock data
   const blinks = {
-    '1': { id: '1', name: 'Donation Blink', type: 'payment', amount: 5, description: 'Quick donation link', expirationDate: '2024-12-31', url: 'https://blink.bark.io/donate/1' },
-    '2': { id: '2', name: 'Vote for Project', type: 'vote', description: 'Community vote for next project', expirationDate: '2024-06-30', url: 'https://blink.bark.io/vote/2' },
+    '1': { id: '1', name: 'Donation Blink', type: 'payment', amount: 5, description: 'Quick donation link', expirationDate: '2024-12-31', url: 'https://blink.barkprotocol.net/donate/1' },
+    '2': { id: '2', name: 'Vote for Project', type: 'vote', description: 'Community vote for next project', expirationDate: '2024-06-30', url: 'https://blink.barkprotocol.net/vote/2' },
   }
 
   return blinks[id as keyof typeof blinks] || null

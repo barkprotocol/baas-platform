@@ -260,34 +260,7 @@ export const getCampaignStatus = async (campaignId: string): Promise<ApiResponse
     message: "Campaign status fetched successfully", 
     data: { 
       raised: Math.floor(Math.random() * 100000),
-      backers: Math.floor(Math.random() * 1000)
-    } 
-  };
-};
-
-// API function for verifying a transaction
-export const verifyTransaction = async (transactionId: string): Promise<ApiResponse<{ verified: boolean }>> => {
-  await simulateApiDelay();
-  if (simulateApiError()) {
-    throw new Error("Failed to verify transaction. Please try again.");
-  }
-  const verified = Math.random() > 0.1; // 90% chance of verification success
-  return { success: true, message: verified ? "Transaction verified" : "Transaction verification failed", data: { verified } };
-};
-
-// API function for getting platform fees
-export const getPlatformFees = async (): Promise<ApiResponse<{ transactionFee: number, nftMintingFee: number, listingFee: number }>> => {
-  await simulateApiDelay();
-  if (simulateApiError()) {
-    throw new Error("Failed to fetch platform fees. Please try again.");
-  }
-  return { 
-    success: true, 
-    message: "Platform fees fetched successfully", 
-    data: { 
-      transactionFee: 0.01,
-      nftMintingFee: 0.05,
-      listingFee: 0.001
+      backers: Math.floor(Math.random() * 500)
     } 
   };
 };

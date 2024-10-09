@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Action } from '@/types/actionboard'
+import { Action } from '@/app/types/blinkboard'
 
 interface ActionSelectorProps {
   actions: Action[]
@@ -19,6 +19,8 @@ export default function ActionSelector({ actions, selectedAction, setSelectedAct
             isDarkMode && selectedAction.name !== action.name ? 'hover:bg-gray-700' : ''
           }`}
           onClick={() => setSelectedAction(action)}
+          aria-pressed={selectedAction.name === action.name}
+          aria-label={`Select action: ${action.name}`}
         >
           <action.icon className={`h-6 w-6 mb-2 ${isDarkMode ? 'text-gray-300' : 'text-[#D0BFB4]'}`} />
           <span className="text-sm">{action.name}</span>

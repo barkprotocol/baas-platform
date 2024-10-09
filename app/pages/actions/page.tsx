@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BookOpen } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
@@ -26,6 +26,7 @@ export default function ActionsPage() {
   const [barkBalance, setBarkBalance] = useState<number>(0)
   const [governanceProposals, setGovernanceProposals] = useState<any[]>([])
   const [claimableRewards, setClaimableRewards] = useState<number>(0)
+  const [subscriptionTier, setSubscriptionTier] = useState<'Starter' | 'Pro' | 'Enterprise'>('Starter');
   const { toast } = useToast()
 
   useEffect(() => {
@@ -112,6 +113,15 @@ export default function ActionsPage() {
     }
   }
 
+  const handleTierChange = (newTier: 'Starter' | 'Pro' | 'Enterprise') => {
+    setSubscriptionTier(newTier);
+    toast({
+      title: `Subscription Tier Changed`,
+      description: `You have switched to the ${newTier} tier.`,
+      duration: 3000,
+    });
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
@@ -178,6 +188,18 @@ export default function ActionsPage() {
             />
           </CardContent>
         </Card>
+      </div>
+
+      <div className="flex justify-between my-4">
+        <Button onClick={() => handleTierChange('Starter')} className={`${
+          subscriptionTier === 'Starter' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+        }`} variant="outline">Starter</Button>
+        <Button onClick={() => handleTierChange('Pro')} className={`${
+          subscriptionTier === 'Pro' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+        }`} variant="outline">Pro</Button>
+        <Button onClick={() => handleTierChange('Enterprise')} className={`${
+          subscriptionTier === 'Enterprise' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+        }`} variant="outline">Enterprise</Button>
       </div>
 
       <RecentActions

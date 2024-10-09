@@ -2,6 +2,9 @@ import { Connection, Cluster, clusterApiUrl } from '@solana/web3.js';
 
 let connection: Connection | null = null;
 
+/**
+ * Gets the current Solana connection. Creates a new connection if one does not exist.
+ */
 export function getConnection(): Connection {
   if (!connection) {
     const cluster: Cluster = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as Cluster) || 'devnet';
@@ -11,20 +14,32 @@ export function getConnection(): Connection {
   return connection;
 }
 
+/**
+ * Sets a custom RPC endpoint for Solana connection.
+ */
 export function setCustomEndpoint(endpoint: string): void {
   connection = new Connection(endpoint, 'confirmed');
 }
 
+/**
+ * Resets the current Solana connection.
+ */
 export function resetConnection(): void {
   connection = null;
 }
 
+/**
+ * Gets the current network version.
+ */
 export async function getNetworkVersion(): Promise<string> {
   const conn = getConnection();
   const version = await conn.getVersion();
   return `Solana ${version['solana-core']}`;
 }
 
+/**
+ * Checks if the connection to Solana is active.
+ */
 export async function isConnected(): Promise<boolean> {
   try {
     const conn = getConnection();
@@ -36,7 +51,10 @@ export async function isConnected(): Promise<boolean> {
   }
 }
 
-export async function getNetworkStats(): Promise<{ tps: number, blockTime: number }> {
+/**
+ * Gets network statistics such as transactions per second and block time.
+ */
+export async function getNetworkStats(): Promise<{ tps: number; blockTime: number }> {
   const conn = getConnection();
   const perfSamples = await conn.getRecentPerformanceSamples(1);
   const blockTime = await conn.getRecentBlockhash().then(res => res.lastValidBlockHeight);

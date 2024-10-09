@@ -1,30 +1,43 @@
-import { useState } from 'react'
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { Info } from 'lucide-react'
-import { Action, Currency } from '@/types/actionboard'
-import CurrencySelector from './currency-selector'
+import { useState, useMemo } from 'react';
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Info } from 'lucide-react';
+import { Action, Currency } from '@/types/actionboard';
+import CurrencySelector from './currency-selector';
+
+interface FormData {
+  amount?: string;
+  recipient?: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  tokenSupply?: string;
+  proposalType?: string;
+  proposal?: string;
+  memo?: string;
+  data?: string;
+  fee?: string;
+}
 
 interface ActionFormProps {
-  selectedAction: Action
-  selectedCurrency: Currency
-  setSelectedCurrency: (currency: Currency) => void
-  currencies: Currency[]
-  isSimulation: boolean
-  setIsSimulation: (isSimulation: boolean) => void
-  memo: string
-  setMemo: (memo: string) => void
-  barkBalance: number
-  governanceProposals: any[]
-  claimableRewards: number
-  onSubmit: (formData: any) => void
-  isDarkMode: boolean
+  selectedAction: Action;
+  selectedCurrency: Currency;
+  setSelectedCurrency: (currency: Currency) => void;
+  currencies: Currency[];
+  isSimulation: boolean;
+  setIsSimulation: (isSimulation: boolean) => void;
+  memo: string;
+  setMemo: (memo: string) => void;
+  barkBalance: number;
+  governanceProposals: any[];
+  claimableRewards: number;
+  onSubmit: (formData: FormData) => void;
+  isDarkMode: boolean;
 }
 
 export default function ActionForm({
@@ -42,18 +55,28 @@ export default function ActionForm({
   onSubmit,
   isDarkMode
 }: ActionFormProps) {
-  const [formData, setFormData] = useState<any>({})
+  const [formData, setFormData] = useState<FormData>({});
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value })
-  }
+    setFormData((prevData) => ({ ...prevData, [e.target.id]: e.target.value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
+    e.preventDefault();
+    
+    // Basic validation
+    if (!formData.amount && selectedAction.name === 'Transfer SPL Tokens') {
+      alert("Amount is required.");
+      return;
+    }
+    
+    setLoading(true);
+    onSubmit(formData);
+    setLoading(false);
+  };
 
-  const renderActionInputs = () => {
+  const renderActionInputs = useMemo(() => {
     switch (selectedAction.name) {
       case 'Transfer SPL Tokens':
         return (
@@ -78,7 +101,7 @@ export default function ActionForm({
               />
             </div>
           </>
-        )
+        );
       case 'Create SPL Token':
         return (
           <>
@@ -109,7 +132,7 @@ export default function ActionForm({
               />
             </div>
           </>
-        )
+        );
       case 'Governance':
         return (
           <>
@@ -141,12 +164,11 @@ export default function ActionForm({
               <p>{barkBalance.toLocaleString()} BARK</p>
             </div>
           </>
-        )
-      // Add cases for other action types...
+        );
       default:
-        return null
+        return null;
     }
-  }
+  }, [selectedAction.name, selectedCurrency.symbol, barkBalance]);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -159,7 +181,7 @@ export default function ActionForm({
             isDarkMode={isDarkMode}
           />
         )}
-        {renderActionInputs()}
+        {renderActionInputs}
       </div>
       <Tabs defaultValue="basic" className="w-full mt-4">
         <TabsList className="grid w-full grid-cols-2">
@@ -198,7 +220,6 @@ export default function ActionForm({
                 min="0"
                 placeholder="Enter custom fee" 
                 onChange={handleInputChange}
-              
               />
             </div>
           </div>
@@ -222,9 +243,9 @@ export default function ActionForm({
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Button type="submit" className="w-full mt-4">
-        {isSimulation ? 'Simulate' : 'Execute'} {selectedAction.name}
+      <Button type="submit" className="w-full mt-4" disabled={loading}>
+        {loading ? 'Processing...' : `${isSimulation ? 'Simulate' : 'Execute'} ${selectedAction.name}`}
       </Button>
     </form>
-  )
+  );
 }

@@ -9,6 +9,7 @@ import { getSolanaPrices } from '@/lib/payments/solana-pay'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
+// Define the structure of Product and Price interfaces
 interface Product {
   id: string;
   name: string;
@@ -22,71 +23,94 @@ interface Price {
   trialPeriodDays: number;
 }
 
+// Define the structure for PricingData to hold all the necessary pricing information
 interface PricingData {
-  basePlan: Product | undefined;
+  starterPlan: Product | undefined;
   proPlan: Product | undefined;
-  basePrice: Price | undefined;
+  enterprisePlan: Product | undefined;
+  starterPrice: Price | undefined;
   proPrice: Price | undefined;
-  solanaBasePrice: Price;
+  enterprisePrice: Price | undefined;
+  solanaStarterPrice: Price;
   solanaProPrice: Price;
+  solanaEnterprisePrice: Price;
 }
 
+// Set revalidation time for the pricing data
 export const revalidate = 3600 // Prices are fresh for one hour max
 
 export default function PricingPage() {
-  const [paymentMethod, setPaymentMethod] = useState('stripe')
-  const [pricingData, setPricingData] = useState<PricingData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [paymentMethod, setPaymentMethod] = useState('stripe') // Track the selected payment method
+  const [pricingData, setPricingData] = useState<PricingData | null>(null) // Store fetched pricing data
+  const [loading, setLoading] = useState(true) // Loading state for fetching data
 
   useEffect(() => {
     const fetchPrices = async () => {
       try {
+        // Fetch all necessary pricing data
         const [stripePrices, commerceProducts, solanaPrices] = await Promise.all([
           getStripePrices(),
           getCommerceProducts(),
           getSolanaPrices(),
         ])
 
-        const basePlan = commerceProducts.find((product: Product) => product.name === 'Base')
+        // Map the fetched products and prices
+        const starterPlan = commerceProducts.find((product: Product) => product.name === 'Starter')
         const proPlan = commerceProducts.find((product: Product) => product.name === 'Pro')
+        const enterprisePlan = commerceProducts.find((product: Product) => product.name === 'Enterprise')
 
-        const basePrice = stripePrices.find((price: Price) => price.productId === basePlan?.id)
+        const starterPrice = stripePrices.find((price: Price) => price.productId === starterPlan?.id)
         const proPrice = stripePrices.find((price: Price) => price.productId === proPlan?.id)
+        const enterprisePrice = stripePrices.find((price: Price) => price.productId === enterprisePlan?.id)
 
-        const solanaBasePrice: Price = {
-          id: 'solana-base',
-          productId: basePlan?.id || '',
+        // Define Solana pricing based on fetched Solana prices
+        const solanaStarterPrice: Price = {
+          id: 'starter',
+          productId: starterPlan?.id || '',
           unitAmount: Math.round(solanaPrices.solana.usd * 100),
           interval: 'month',
           trialPeriodDays: 7,
         }
 
         const solanaProPrice: Price = {
-          id: 'solana-pro',
+          id: 'pro',
           productId: proPlan?.id || '',
           unitAmount: Math.round(solanaPrices.solana.usd * 200),
           interval: 'month',
           trialPeriodDays: 7,
         }
 
+        const solanaEnterprisePrice: Price = {
+          id: 'enterprise',
+          productId: enterprisePlan?.id || '',
+          unitAmount: Math.round(solanaPrices.solana.usd * 300),
+          interval: 'month',
+          trialPeriodDays: 7,
+        }
+
+        // Set the pricing data in state
         setPricingData({
-          basePlan,
+          starterPlan,
           proPlan,
-          basePrice,
+          enterprisePlan,
+          starterPrice,
           proPrice,
-          solanaBasePrice,
+          enterprisePrice,
+          solanaStarterPrice,
           solanaProPrice,
+          solanaEnterprisePrice,
         })
-        setLoading(false)
+        setLoading(false) // Update loading state
       } catch (error) {
         console.error('Error fetching pricing data:', error)
-        setLoading(false)
+        setLoading(false) // Update loading state even on error
       }
     }
 
-    fetchPrices()
+    fetchPrices() // Call the function to fetch pricing data
   }, [])
 
+  // Handle loading state and errors
   if (loading) {
     return <div>Loading pricing information...</div>
   }
@@ -95,24 +119,36 @@ export default function PricingPage() {
     return <div>Error loading pricing information. Please try again later.</div>
   }
 
-  const { basePlan, proPlan, basePrice, proPrice, solanaBasePrice, solanaProPrice } = pricingData
+  // Destructure pricing data for easier access
+  const { 
+    starterPlan, 
+    proPlan, 
+    enterprisePlan, 
+    starterPrice, 
+    proPrice, 
+    enterprisePrice, 
+    solanaStarterPrice, 
+    solanaProPrice, 
+    solanaEnterprisePrice 
+  } = pricingData
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-4xl font-bold text-center mb-8">Choose Your BARK Dashboard Plan</h1>
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        {/* Render Pricing Cards for each plan */}
         <PricingCard
-          name={basePlan?.name || 'Base'}
-          price={paymentMethod === 'stripe' ? basePrice?.unitAmount : solanaBasePrice.unitAmount}
-          interval={basePrice?.interval || 'month'}
-          trialDays={basePrice?.trialPeriodDays || 7}
+          name={starterPlan?.name || 'Starter'}
+          price={paymentMethod === 'stripe' ? starterPrice?.unitAmount : solanaStarterPrice.unitAmount}
+          interval={starterPrice?.interval || 'month'}
+          trialDays={starterPrice?.trialPeriodDays || 7}
           features={[
             'Access to BARK Community',
-            'Basic BARK Services',
+            'Basic BaaS Services',
             'Standard Support',
             'Limited API Access',
           ]}
-          priceId={paymentMethod === 'stripe' ? basePrice?.id : solanaBasePrice.id}
+          priceId={paymentMethod === 'stripe' ? starterPrice?.id : solanaStarterPrice.id}
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
         />
@@ -122,8 +158,8 @@ export default function PricingPage() {
           interval={proPrice?.interval || 'month'}
           trialDays={proPrice?.trialPeriodDays || 7}
           features={[
-            'Everything in Base, plus:',
-            'Advanced BARK Services',
+            'Everything in Starter, plus:',
+            'Advanced BaaS Services',
             'Priority Support',
             'Full API Access',
             'Custom Integrations',
@@ -132,11 +168,28 @@ export default function PricingPage() {
           paymentMethod={paymentMethod}
           onPaymentMethodChange={setPaymentMethod}
         />
+        <PricingCard
+          name={enterprisePlan?.name || 'Enterprise'}
+          price={paymentMethod === 'stripe' ? enterprisePrice?.unitAmount : solanaEnterprisePrice.unitAmount}
+          interval={enterprisePrice?.interval || 'month'}
+          trialDays={enterprisePrice?.trialPeriodDays || 7}
+          features={[
+            'Everything in Pro, plus:',
+            'Dedicated Account Manager',
+            'Custom Solutions',
+            'Enterprise-Level Support',
+            'Tailored BaaS Features',
+          ]}
+          priceId={paymentMethod === 'stripe' ? enterprisePrice?.id : solanaEnterprisePrice.id}
+          paymentMethod={paymentMethod}
+          onPaymentMethodChange={setPaymentMethod}
+        />
       </div>
     </main>
   )
 }
 
+// Define the props for PricingCard component
 interface PricingCardProps {
   name: string;
   price: number | undefined;
@@ -148,6 +201,7 @@ interface PricingCardProps {
   onPaymentMethodChange: (method: string) => void;
 }
 
+// PricingCard component definition
 function PricingCard({
   name,
   price,
@@ -187,21 +241,23 @@ function PricingCard({
             value={paymentMethod}
             onChange={(e) => onPaymentMethodChange(e.target.value)}
           >
-            <option value="stripe">Pay with Stripe</option>
-            <option value="solana">Pay with Solana</option>
+            <option value="stripe">Credit Card</option>
+            <option value="solana">Solana Pay</option>
           </select>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-5 w-5 text-gray-400" />
+                <Info className="text-sand-500 h-5 w-5 cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Choose your preferred payment method</p>
+                <p className="text-sm">Choose your payment method for this plan.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <SubmitButton />
+        <SubmitButton type="submit" className="w-full" disabled={!priceId}>
+          Choose {name}
+        </SubmitButton>
       </form>
     </div>
   )

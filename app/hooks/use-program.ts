@@ -26,9 +26,9 @@ type BarkProgramMethods = {
 export const useProgram = () => {
   // Set up the provider
   const getProvider = () => {
-    if (typeof window !== 'undefined' && 'solana' in window) {
+    if (typeof window !== 'undefined' && window.solana) {
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const provider = new AnchorProvider(connection, window.solana, { commitment: 'confirmed' });
+      const provider = new AnchorProvider(connection, window.solana as any, { commitment: 'confirmed' });
       return provider;
     }
     throw new Error('Wallet not found');
@@ -38,7 +38,7 @@ export const useProgram = () => {
 
   // Create the program
   const programId = new PublicKey(idl.metadata?.address || 'BARK_PROGRAM_ID_HERE');
-  const program = new Program(idl as BarkProtocolIDL, programId, provider) as Program<BarkProgramMethods>;
+  const program = new Program<BarkProgramMethods>(idl as BarkProtocolIDL, programId, provider);
 
   return { program, connection: provider.connection };
 };

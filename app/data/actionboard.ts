@@ -1,4 +1,4 @@
-import { Action, Currency } from '@/types/actionboard'
+import { Action, Currency } from '@/types/actionboard';
 
 export const actions: Action[] = [
   {
@@ -37,7 +37,7 @@ export const actions: Action[] = [
     description: 'Swap BARK tokens for other cryptocurrencies',
     icon: 'Repeat',
   },
-]
+];
 
 export const currencies: Currency[] = [
   {
@@ -68,22 +68,26 @@ export const currencies: Currency[] = [
     icon: '/images/usdt-icon.svg',
     decimals: 6,
   },
-]
+];
 
+// Get an action by its ID
 export const getActionById = (id: string): Action | undefined => {
-  return actions.find(action => action.id === id)
-}
+  return actions.find(action => action.id === id);
+};
 
+// Get a currency by its ID
 export const getCurrencyById = (id: string): Currency | undefined => {
-  return currencies.find(currency => currency.id === id)
-}
+  return currencies.find(currency => currency.id === id);
+};
 
+// Get the icon of an action by its ID
 export const getActionIcon = (actionId: string): string => {
-  const action = getActionById(actionId)
-  return action ? action.icon : 'QuestionMark'
-}
+  const action = getActionById(actionId);
+  return action ? action.icon : 'QuestionMark'; // Default icon for undefined action
+};
 
+// Get the icon of a currency by its ID
 export const getCurrencyIcon = (currencyId: string): string => {
-  const currency = getCurrencyById(currencyId)
-  return currency ? currency.icon : '/images/default-currency-icon.svg'
-}
+  const currency = getCurrencyById(currencyId);
+  return currency ? currency.icon : '/images/default-currency-icon.svg'; // Default icon for undefined currency
+};

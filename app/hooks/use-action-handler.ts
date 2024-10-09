@@ -1,18 +1,18 @@
-import { useState, useCallback } from 'react'
-import { Action, Currency, ActionResult } from '@/types/actionboard'
-import { useToast } from "@/components/ui/use-toast"
-import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { Transaction, PublicKey, SystemProgram } from '@solana/web3.js'
-import { Program, AnchorProvider, web3 } from '@coral-xyz/anchor'
-import { IDL } from '@/idl/bark_protocol'
+import { useState, useCallback } from 'react';
+import { Action, Currency, ActionResult } from '@/types/actionboard';
+import { useToast } from "@/components/ui/use-toast";
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { Transaction, PublicKey, SystemProgram } from '@solana/web3.js';
+import { Program, AnchorProvider, web3 } from '@coral-xyz/anchor';
+import { IDL } from '@/idl/bark_protocol';
 
-const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb')
+const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
 
 export function useActionHandler() {
-  const [isProcessing, setIsProcessing] = useState(false)
-  const { toast } = useToast()
-  const { connection } = useConnection()
-  const wallet = useWallet()
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
+  const { connection } = useConnection();
+  const wallet = useWallet();
 
   const handleAction = useCallback(async (
     action: Action,
@@ -26,90 +26,80 @@ export function useActionHandler() {
         title: "Error",
         description: "Please connect your wallet to perform this action.",
         variant: "destructive",
-      })
-      return {
-        id: '',
-        success: false,
-        message: "Wallet not connected",
-        actionId: action.id,
-        actionType: action.type,
-        amount,
-        currency: currency.symbol,
-        timestamp: Date.now(),
-        status: 'failed'
-      }
+      });
+      return createActionResult(action, currency, amount, 'failed', "Wallet not connected");
     }
 
-    setIsProcessing(true)
+    setIsProcessing(true);
     try {
-      const provider = new AnchorProvider(connection, wallet as any, {})
-      const program = new Program(IDL, TOKEN_2022_PROGRAM_ID, provider)
+      const provider = new AnchorProvider(connection, wallet as any, {});
+      const program = new Program(IDL, TOKEN_2022_PROGRAM_ID, provider);
 
-      let txHash: string
+      let txHash: string;
 
       if (isSimulation) {
-        const tx = await program.methods
+        await program.methods
           .executeAction(action.id, new web3.BN(amount), memo)
           .accounts({
             user: wallet.publicKey,
             systemProgram: SystemProgram.programId,
           })
-          .simulate()
+          .simulate();
 
-        txHash = 'simulation-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5)
+        txHash = generateSimulationTxHash();
       } else {
-        const tx = await program.methods
+        txHash = await program.methods
           .executeAction(action.id, new web3.BN(amount), memo)
           .accounts({
             user: wallet.publicKey,
             systemProgram: SystemProgram.programId,
           })
-          .rpc()
-
-        txHash = tx
+          .rpc();
       }
 
-      const resultMessage = `${action.name} ${isSimulation ? 'simulated' : 'executed'} successfully`
+      const resultMessage = `${action.name} ${isSimulation ? 'simulated' : 'executed'} successfully`;
       toast({
         title: "Success",
         description: `${resultMessage}. Transaction: ${txHash}`,
-      })
+      });
 
-      return {
-        id: txHash,
-        success: true,
-        message: resultMessage,
-        txHash,
-        actionId: action.id,
-        actionType: action.type,
-        amount,
-        currency: currency.symbol,
-        timestamp: Date.now(),
-        status: isSimulation ? 'simulated' : 'completed'
-      }
+      return createActionResult(action, currency, amount, isSimulation ? 'simulated' : 'completed', resultMessage, txHash);
     } catch (error) {
-      console.error('Error executing action:', error)
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
+      console.error('Error executing action:', error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
-      })
-      return {
-        id: '',
-        success: false,
-        message: errorMessage,
-        actionId: action.id,
-        actionType: action.type,
-        amount,
-        currency: currency.symbol,
-        timestamp: Date.now(),
-        status: 'failed'
-      }
+      });
+      return createActionResult(action, currency, amount, 'failed', errorMessage);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }, [connection, wallet, toast])
+  }, [connection, wallet, toast]);
 
-  return { handleAction, isProcessing }
+  const createActionResult = (
+    action: Action,
+    currency: Currency,
+    amount: number,
+    status: 'completed' | 'failed' | 'simulated',
+    message: string,
+    txHash?: string
+  ): ActionResult => ({
+    id: txHash || '',
+    success: status !== 'failed',
+    message,
+    actionId: action.id,
+    actionType: action.type,
+    amount,
+    currency: currency.symbol,
+    timestamp: Date.now(),
+    status,
+  });
+
+  const generateSimulationTxHash = (): string => {
+    return 'simulation-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  };
+
+  return { handleAction, isProcessing };
 }
