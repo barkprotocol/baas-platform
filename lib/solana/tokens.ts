@@ -1,153 +1,156 @@
-import { 
-    Token,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    MintLayout,
-  } from '@solana/spl-token';
-  import { Connection, PublicKey, Transaction, SystemProgram, Keypair } from '@solana/web3.js';
-  import { getConnection } from './connections';
-  
-  export async function getTokenBalance(
-    connection: Connection,
-    walletAddress: PublicKey,
-    tokenMintAddress: PublicKey
-  ): Promise<number> {
-    const tokenAccount = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      tokenMintAddress,
-      walletAddress
-    );
-  
-    try {
-      const balance = await connection.getTokenAccountBalance(tokenAccount);
-      return parseFloat(balance.value.amount) / Math.pow(10, balance.value.decimals);
-    } catch (error) {
-      console.error('Error fetching token balance:', error);
-      return 0;
-    }
-  }
-  
-  export async function createToken(
-    connection: Connection,
-    payer: Keypair,
-    mintAuthority: PublicKey,
-    freezeAuthority: PublicKey | null,
-    decimals: number
-  ): Promise<PublicKey> {
-    const mintAccount = Keypair.generate();
-    const token = new Token(
+// solana/tokens.ts
+
+import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
+import {
+  createMint,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+  transfer,
+  getMint,
+  getAccount,
+} from '@solana/spl-token';
+
+// Initialize Solana connection
+const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com');
+
+/**
+ * Create a new token mint on Solana
+ * @param payer - The Keypair that will pay for the transaction
+ * @param mintAuthority - The mint authority for the new token
+ * @param freezeAuthority - The freeze authority (optional)
+ * @param decimals - Number of decimal places for the token (default 9, like SOL)
+ * @returns - The PublicKey of the newly created token mint
+ */
+export const createTokenMint = async (
+  payer: Keypair,
+  mintAuthority: PublicKey,
+  freezeAuthority: PublicKey | null = null,
+  decimals: number = 9
+) => {
+  try {
+    const mint = await createMint(
       connection,
-      mintAccount.publicKey,
-      TOKEN_PROGRAM_ID,
-      payer
+      payer,
+      mintAuthority,
+      freezeAuthority,
+      decimals
     );
-  
+    console.log('Token Mint Created:', mint.toBase58());
+    return mint;
+  } catch (error) {
+    console.error('Error creating token mint:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mint new tokens to an associated token account
+ * @param mint - The token mint PublicKey
+ * @param destination - The destination PublicKey (associated token account)
+ * @param amount - Amount of tokens to mint
+ * @param mintAuthority - Keypair with authority to mint tokens
+ */
+export const mintTokens = async (
+  mint: PublicKey,
+  destination: PublicKey,
+  amount: number,
+  mintAuthority: Keypair
+) => {
+  try {
+    await mintTo(connection, mintAuthority, mint, destination, mintAuthority.publicKey, amount);
+    console.log(`${amount} tokens minted to ${destination.toBase58()}`);
+  } catch (error) {
+    console.error('Error minting tokens:', error);
+    throw error;
+  }
+};
+
+/**
+ * Transfer tokens between accounts
+ * @param source - The source PublicKey (associated token account)
+ * @param destination - The destination PublicKey (associated token account)
+ * @param amount - Amount of tokens to transfer
+ * @param owner - Keypair that owns the source account
+ */
+export const transferTokens = async (
+  source: PublicKey,
+  destination: PublicKey,
+  amount: number,
+  owner: Keypair
+) => {
+  try {
     const transaction = new Transaction().add(
-      SystemProgram.createAccount({
-        fromPubkey: payer.publicKey,
-        newAccountPubkey: mintAccount.publicKey,
-        space: MintLayout.span,
-        lamports: await Token.getMinBalanceRentForExemptMint(connection),
-        programId: TOKEN_PROGRAM_ID,
-      }),
-      Token.createInitMintInstruction(
-        TOKEN_PROGRAM_ID,
-        mintAccount.publicKey,
-        decimals,
-        mintAuthority,
-        freezeAuthority
+      transfer(
+        source, 
+        destination, 
+        owner.publicKey, 
+        amount, 
+        []
       )
     );
-  
-    await connection.sendTransaction(transaction, [payer, mintAccount]);
-    return mintAccount.publicKey;
+    await connection.sendTransaction(transaction, [owner]);
+    console.log(`${amount} tokens transferred from ${source.toBase58()} to ${destination.toBase58()}`);
+  } catch (error) {
+    console.error('Error transferring tokens:', error);
+    throw error;
   }
-  
-  export async function createAssociatedTokenAccount(
-    connection: Connection,
-    payer: Keypair,
-    tokenMintAddress: PublicKey,
-    owner: PublicKey
-  ): Promise<PublicKey> {
-    const associatedTokenAddress = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      tokenMintAddress,
+};
+
+/**
+ * Get or create an associated token account for a given mint and owner
+ * @param mint - The token mint PublicKey
+ * @param owner - The owner PublicKey of the associated token account
+ * @param payer - The payer Keypair for account creation
+ * @returns - The associated token account PublicKey
+ */
+export const getOrCreateTokenAccount = async (
+  mint: PublicKey,
+  owner: PublicKey,
+  payer: Keypair
+) => {
+  try {
+    const tokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      payer,
+      mint,
       owner
     );
-  
-    const transaction = new Transaction().add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        tokenMintAddress,
-        associatedTokenAddress,
-        owner,
-        payer.publicKey
-      )
-    );
-  
-    await connection.sendTransaction(transaction, [payer]);
-    return associatedTokenAddress;
+    console.log('Token account created/retrieved:', tokenAccount.address.toBase58());
+    return tokenAccount;
+  } catch (error) {
+    console.error('Error getting/creating token account:', error);
+    throw error;
   }
-  
-  export async function transferToken(
-    connection: Connection,
-    payer: Keypair,
-    source: PublicKey,
-    destination: PublicKey,
-    owner: PublicKey,
-    amount: number,
-    tokenMintAddress: PublicKey
-  ): Promise<string> {
-    const token = new Token(
-      connection,
-      tokenMintAddress,
-      TOKEN_PROGRAM_ID,
-      payer
-    );
-  
-    const transaction = new Transaction().add(
-      Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        source,
-        destination,
-        owner,
-        [],
-        amount
-      )
-    );
-  
-    const signature = await connection.sendTransaction(transaction, [payer]);
-    return signature;
+};
+
+/**
+ * Fetch account information for a given token account
+ * @param tokenAccount - The PublicKey of the token account
+ * @returns - Token account information
+ */
+export const getTokenAccountInfo = async (tokenAccount: PublicKey) => {
+  try {
+    const accountInfo = await getAccount(connection, tokenAccount);
+    console.log('Token account info:', accountInfo);
+    return accountInfo;
+  } catch (error) {
+    console.error('Error fetching token account info:', error);
+    throw error;
   }
-  
-  export async function getTokenInfo(tokenMintAddress: PublicKey): Promise<any> {
-    const connection = getConnection();
-    const info = await connection.getParsedAccountInfo(tokenMintAddress);
-    
-    if (info.value && 'parsed' in info.value.data) {
-      const parsedData = info.value.data.parsed;
-      return {
-        mintAuthority: parsedData.info.mintAuthority,
-        supply: parsedData.info.supply,
-        decimals: parsedData.info.decimals,
-      };
-    }
-    
-    throw new Error('Failed to fetch token info');
+};
+
+/**
+ * Fetch mint information for a given token mint
+ * @param mint - The token mint PublicKey
+ * @returns - Mint information
+ */
+export const getMintInfo = async (mint: PublicKey) => {
+  try {
+    const mintInfo = await getMint(connection, mint);
+    console.log('Mint info:', mintInfo);
+    return mintInfo;
+  } catch (error) {
+    console.error('Error fetching mint info:', error);
+    throw error;
   }
-  
-  export async function burnTokens(
-    connection: Connection,
-    payer: Keypair,
-    account: PublicKey,
-    mint: PublicKey,
-    owner: Keypair,
-    amount: number
-  ): Promise<string> {
-    const token = new Token(connection, mint, TOKEN_PROGRAM_ID, payer);
-    const transactionSignature = await token.burn(account, owner, [], amount);
-    return transactionSignature;
-  }
+};

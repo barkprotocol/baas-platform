@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { checkoutAction } from '@/lib/payments/actions'
+import { checkoutAction } from '@/lib/payments/chech'
 import { Check, Info } from 'lucide-react'
 import { getStripePrices } from '@/lib/payments/stripe'
 import { getCommerceProducts } from '@/lib/e-commerce/products'
