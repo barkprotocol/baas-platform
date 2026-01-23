@@ -89,7 +89,7 @@
     "express": "^4.21.0",
     "framer-motion": "^11.11.1",
     "jose": "^5.9.3",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "logger": "^0.0.1",
     "lucide-react": "^0.441.0",
     "mathjs": "^13.2.0",
